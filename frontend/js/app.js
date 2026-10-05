@@ -1,7 +1,7 @@
 /**
  * Cinema — Intelligent Recommendation Studio
- * Google Antigravity & Vercel Multi-Theme Controller,
- * Real Login Screen View, and Movie Thematic Visual Engine.
+ * Vercel Precision Theme & Movie Thematic Visual Engine,
+ * 3D Interactive Perspective, and Vercel Spotlight Dynamics.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -56,9 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   ];
 
-  // Available Themes: Google Antigravity, Vercel Dark, Vercel Light
+  // Active Themes: Vercel Dark (Default) & Vercel Light
   const THEMES = [
-    { id: 'antigravity', name: 'Antigravity', icon: '🌌' },
     { id: 'vercel-dark', name: 'Vercel Dark', icon: '▲' },
     { id: 'vercel-light', name: 'Vercel Light', icon: '☀️' },
   ];
@@ -73,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modelType: 'hybrid',
     k: 10,
     genreFilter: '',
+    theme: localStorage.getItem('cinema_theme') || 'vercel-dark',
     catalogQuery: '',
     catalogGenre: '',
     catalogSort: 'bayesian_score',
@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function initTheme() {
     // Validate saved theme or default to antigravity
     if (!THEMES.some((t) => t.id === state.theme)) {
-      state.theme = 'antigravity';
+      state.theme = 'vercel-dark';
     }
     document.documentElement.setAttribute('data-theme', state.theme);
     updateThemeUI();

@@ -385,32 +385,6 @@ html[data-theme="vercel-light"] {
 .tilt-3d .card-actions {
   transform: translateZ(16px);
 }
-
-/* Google Antigravity Zero-G Floating Levitation Animations */
-@keyframes antigravityFloat {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-7px) rotate(0.4deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
-}
-
-@keyframes antigravityFloatAlt {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-6px) rotate(-0.5deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
-}
-
-html[data-theme="antigravity"] .hero-card {
-  animation: antigravityFloat 7s ease-in-out infinite;
-}
-
-html[data-theme="antigravity"] .hero-stat-box:nth-child(odd) {
-  animation: antigravityFloat 5.5s ease-in-out infinite;
-}
-
-html[data-theme="antigravity"] .hero-stat-box:nth-child(even) {
-  animation: antigravityFloatAlt 6.5s ease-in-out infinite;
-}
-
 /* ==========================================================================
    Navigation Bar
    ========================================================================== */
@@ -520,32 +494,6 @@ html[data-theme="antigravity"] .hero-stat-box:nth-child(even) {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.theme-toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: var(--btn-radius);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  color: var(--text-main);
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.theme-toggle-btn:hover {
-  background: var(--bg-glass-hover);
-  border-color: var(--border-medium);
-  box-shadow: var(--shadow-sm);
-}
-
-.theme-icon {
-  font-size: 0.95rem;
 }
 
 /* User Account Chip */
