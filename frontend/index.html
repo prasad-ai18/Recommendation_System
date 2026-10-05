@@ -36,7 +36,7 @@
         </div>
       </div>
 
-      <!-- Navigation Tabs (Including Direct Real Login Screen Tab) -->
+      <!-- Navigation Tabs -->
       <nav class="nav-tabs" id="navTabs" aria-label="Main Navigation">
         <button class="nav-tab active" data-tab="home" id="tabHome">Discover</button>
         <button class="nav-tab" data-tab="recommendations" id="tabRecommendations">For You</button>
@@ -45,7 +45,6 @@
         <button class="nav-tab" data-tab="analytics" id="tabAnalytics">Intelligence</button>
         <button class="nav-tab" data-tab="evaluation" id="tabEvaluation">Benchmarks</button>
         <button class="nav-tab" data-tab="architecture" id="tabArchitecture">Architecture</button>
-        <button class="nav-tab nav-tab-auth" data-tab="login" id="tabLogin">Sign In</button>
       </nav>
 
       <!-- Right Controls: Theme Switcher + Account Pill -->
@@ -78,15 +77,11 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               <span>View Taste Signature</span>
             </button>
-            <button class="account-menu-item" id="btnMenuSwitchAccount">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-              <span>Switch / Sign In</span>
-            </button>
             <div class="account-menu-divider"></div>
-            <button class="account-menu-item text-danger" id="btnMenuSignOut">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-              <span>Sign Out to Guest</span>
-            </button>
+            <div class="account-menu-section-title">Select User Profile</div>
+            <div class="account-profiles-list" id="accountProfilesList">
+              <!-- Populated dynamically with one-click user switches -->
+            </div>
           </div>
         </div>
       </div>
@@ -712,71 +707,6 @@
           </div>
         </div>
       </section>
-
-      <!-- ========================================== -->
-      <!-- VIEW 8: REAL AUTHENTICATION & LOGIN PAGE   -->
-      <!-- ========================================== -->
-      <section class="view-panel" id="viewLogin">
-        <div class="login-page-container">
-          <div class="login-hero-header">
-            <div class="login-brand-glyph">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
-              </svg>
-            </div>
-            <h2>Sign in to Cinema Studio</h2>
-            <p>Select your active taste profile or sign in to customize your real-time AI recommendation mix.</p>
-          </div>
-
-          <div class="login-card glass-panel">
-            <div class="login-tabs">
-              <button class="login-tab active" id="tabSelectProfile">Instant Profiles</button>
-              <button class="login-tab" id="tabNewProfile">Sign In / Register</button>
-            </div>
-
-            <!-- Tab 1: Instant Profile Selection (Real MovieLens Archetypes) -->
-            <div class="login-tab-content active" id="panelSelectProfile">
-              <div class="profiles-grid" id="loginProfilesGrid">
-                <!-- Populated dynamically -->
-              </div>
-            </div>
-
-            <!-- Tab 2: Custom Credentials / New Account -->
-            <div class="login-tab-content" id="panelNewProfile">
-              <form id="newProfileForm" class="new-profile-form">
-                <div class="form-group">
-                  <label for="inputUserName">Full Name or Handle</label>
-                  <input type="text" id="inputUserName" class="theme-input" placeholder="e.g. Julian Davies" required />
-                </div>
-
-                <div class="form-group">
-                  <label for="inputUserId">User ID (1–610 for MovieLens History, 9999 for Cold-Start)</label>
-                  <input type="number" id="inputUserId" class="theme-input" min="1" max="9999" value="1" required />
-                  <small class="form-hint">IDs 1–610 instantly map to verified MovieLens historical viewing vectors.</small>
-                </div>
-
-                <div class="form-group">
-                  <label>Preferred Seed Genre</label>
-                  <div class="genre-chips-selector" id="genreChipsSelector">
-                    <!-- Populated dynamically with chips -->
-                  </div>
-                </div>
-
-                <button type="submit" class="action-btn btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">
-                  Sign In & Save Session
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <!-- Auth Security Footnote -->
-          <div class="auth-security-footer">
-            <span>🔒 Local-first session persistence &bull; Real-time MovieLens vector updates</span>
-          </div>
-        </div>
-      </section>
-
     </main>
 
     <!-- MOVIE DETAIL MODAL -->

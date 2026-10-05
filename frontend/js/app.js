@@ -125,19 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const menuUserName = document.getElementById('menuUserName');
   const menuUserTaste = document.getElementById('menuUserTaste');
   const btnMenuProfile = document.getElementById('btnMenuProfile');
-  const btnMenuSwitchAccount = document.getElementById('btnMenuSwitchAccount');
-  const btnMenuSignOut = document.getElementById('btnMenuSignOut');
-
-  // Real Login View Elements
-  const tabSelectProfile = document.getElementById('tabSelectProfile');
-  const tabNewProfile = document.getElementById('tabNewProfile');
-  const panelSelectProfile = document.getElementById('panelSelectProfile');
-  const panelNewProfile = document.getElementById('panelNewProfile');
-  const loginProfilesGrid = document.getElementById('loginProfilesGrid');
-  const newProfileForm = document.getElementById('newProfileForm');
-  const inputUserName = document.getElementById('inputUserName');
-  const inputUserId = document.getElementById('inputUserId');
-  const genreChipsSelector = document.getElementById('genreChipsSelector');
+  const accountProfilesList = document.getElementById('accountProfilesList');
   const btnProfileSwitchUser = document.getElementById('btnProfileSwitchUser');
 
   // Hero Controls
@@ -258,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     state.currentUser = active;
     syncUserUI();
-    renderLoginProfilesList();
+    renderAccountProfilesList();
   }
 
   function saveProfilesToStorage() {
@@ -275,12 +263,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     syncUserUI();
-    renderLoginProfilesList();
+    renderAccountProfilesList();
     loadRecommendations();
     if (document.getElementById('viewProfile').classList.contains('active')) {
       loadUserProfile();
     }
-    showToast(`Signed in as ${profile.name}`);
+    showToast(`Active profile: ${profile.name}`);
 
     if (navigateToRecs) {
       switchTab('recommendations');
@@ -318,34 +306,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function renderLoginProfilesList() {
-    if (!loginProfilesGrid) return;
-    loginProfilesGrid.innerHTML = '';
+  function renderAccountProfilesList() {
+    if (!accountProfilesList) return;
+    accountProfilesList.innerHTML = '';
 
     state.savedProfiles.forEach((profile) => {
-      const card = document.createElement('div');
+      const item = document.createElement('div');
       const isActive = profile.userId === state.userId;
-      card.className = `profile-select-card ${isActive ? 'active-profile' : ''}`;
+      item.className = `account-profile-item ${isActive ? 'active' : ''}`;
 
-      card.innerHTML = `
-        <div class="select-avatar" style="background: ${profile.color || 'var(--accent-gradient)'}">${profile.avatar}</div>
-        <div class="select-info">
-          <span class="select-name">${escapeHtml(profile.name)}</span>
-          <span class="select-desc">${escapeHtml(profile.role)} &bull; ${profile.ratingsCount} ratings</span>
+      item.innerHTML = `
+        <div class="menu-avatar-small" style="background: ${profile.color || 'var(--accent-gradient)'}">${profile.avatar}</div>
+        <div class="menu-profile-info">
+          <span class="menu-profile-name">${escapeHtml(profile.name)}</span>
+          <span class="menu-profile-role">${escapeHtml(profile.role)} &bull; ${profile.ratingsCount} ratings</span>
         </div>
-        ${isActive ? '<span class="select-indicator">Active</span>' : '<button class="action-btn btn-secondary" style="padding:4px 10px;font-size:0.75rem;">Switch</button>'}
+        ${isActive ? '<span class="menu-profile-check">✓</span>' : ''}
       `;
 
-      card.addEventListener('click', () => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
         setActiveUser(profile, true);
+        if (userAccountWrapper) userAccountWrapper.classList.remove('open');
+        if (accountDropdownMenu) accountDropdownMenu.classList.add('hidden');
       });
 
-      loginProfilesGrid.appendChild(card);
+      accountProfilesList.appendChild(item);
     });
   }
 
   // ==========================================
-  // Tab Navigation Controller (Includes #viewLogin)
+  // Tab Navigation Controller
   // ==========================================
   function switchTab(targetTabId) {
     const cleanId = targetTabId.toLowerCase().trim();
@@ -375,8 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (recommendationsGrid.children.length === 0 || recommendationsGrid.querySelector('.loading-state')) {
         loadRecommendations();
       }
-    } else if (cleanId === 'login') {
-      renderLoginProfilesList();
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -489,84 +478,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    if (btnMenuSwitchAccount) {
-      btnMenuSwitchAccount.addEventListener('click', () => {
-        userAccountWrapper.classList.remove('open');
-        accountDropdownMenu.classList.add('hidden');
-        switchTab('login');
-      });
-    }
-
     if (btnProfileSwitchUser) {
       btnProfileSwitchUser.addEventListener('click', () => {
-        switchTab('login');
-      });
-    }
-
-    if (btnMenuSignOut) {
-      btnMenuSignOut.addEventListener('click', () => {
-        userAccountWrapper.classList.remove('open');
-        accountDropdownMenu.classList.add('hidden');
-        const guest = state.savedProfiles.find((p) => p.userId === 9999) || state.savedProfiles[0];
-        setActiveUser(guest, true);
-        showToast('Signed out of personalized profile. Guest mode active.');
-      });
-    }
-
-    // Real Login Screen Tabs
-    if (tabSelectProfile && tabNewProfile) {
-      tabSelectProfile.addEventListener('click', () => {
-        tabSelectProfile.classList.add('active');
-        tabNewProfile.classList.remove('active');
-        panelSelectProfile.classList.add('active');
-        panelNewProfile.classList.remove('active');
-      });
-
-      tabNewProfile.addEventListener('click', () => {
-        tabNewProfile.classList.add('active');
-        tabSelectProfile.classList.remove('active');
-        panelNewProfile.classList.add('active');
-        panelSelectProfile.classList.remove('active');
-      });
-    }
-
-    // New Profile Submission Form
-    if (newProfileForm) {
-      newProfileForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = inputUserName.value.trim();
-        const id = parseInt(inputUserId.value, 10) || 1;
-        if (!name) return;
-
-        const colors = [
-          'linear-gradient(135deg, #00f0ff 0%, #7928ca 100%)',
-          'linear-gradient(135deg, #06d6a0 0%, #118ab2 100%)',
-          'linear-gradient(135deg, #ffb703 0%, #fb8500 100%)',
-          'linear-gradient(135deg, #ff0054 0%, #ff5400 100%)',
-          'linear-gradient(135deg, #9d4edd 0%, #3a0ca3 100%)',
-        ];
-        const randomColor = colors[Math.floor(Math.random() * colors.length)];
-
-        const newProfile = {
-          userId: id,
-          name: name,
-          avatar: name.charAt(0).toUpperCase(),
-          color: randomColor,
-          role: `${state.selectedStarterGenre} Enthusiast`,
-          ratingsCount: id === 9999 ? 0 : 45,
-          primaryGenre: state.selectedStarterGenre,
-        };
-
-        const idx = state.savedProfiles.findIndex((p) => p.userId === id);
-        if (idx >= 0) {
-          state.savedProfiles[idx] = newProfile;
-        } else {
-          state.savedProfiles.push(newProfile);
-        }
-
-        saveProfilesToStorage();
-        setActiveUser(newProfile, true);
-        newProfileForm.reset();
+        const currentIndex = state.savedProfiles.findIndex((p) => p.userId === state.userId);
+        const nextProfile = state.savedProfiles[(currentIndex + 1) % state.savedProfiles.length];
+        setActiveUser(nextProfile, false);
+        loadUserProfile();
       });
     }
 
