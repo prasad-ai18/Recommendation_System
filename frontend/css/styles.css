@@ -174,24 +174,241 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 24px 60px 24px;
+  position: relative;
+  z-index: 1;
+  perspective: 1400px;
 }
 
 /* ==========================================================================
-   Surface Cards
+   Google Antigravity & Vercel Cursor FX
+   ========================================================================== */
+.antigravity-bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.55;
+  transition: opacity 0.3s ease;
+}
+
+html[data-theme="vercel-light"] .antigravity-bg-canvas {
+  opacity: 0.22;
+}
+
+@media (pointer: fine) {
+  .cursor-dot {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    background-color: var(--accent-blue);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 99999;
+    transform: translate(-50%, -50%);
+    transition: width 0.15s ease, height 0.15s ease, opacity 0.15s ease, background-color 0.2s ease;
+    box-shadow: 0 0 12px var(--accent-blue);
+  }
+
+  .cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--accent-blue);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 99998;
+    transform: translate(-50%, -50%);
+    transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                height 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.2s ease, 
+                background-color 0.2s ease, 
+                opacity 0.2s ease,
+                transform 0.15s ease;
+    opacity: 0.65;
+  }
+
+  .cursor-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    transform: translate(-50%, -50%);
+    opacity: 0.22;
+    transition: opacity 0.3s ease;
+  }
+
+  body.cursor-hover .cursor-dot {
+    width: 12px;
+    height: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 0 14px #ffffff, 0 0 25px var(--accent-blue);
+  }
+
+  body.cursor-hover .cursor-ring {
+    width: 52px;
+    height: 52px;
+    border-color: var(--accent-blue);
+    background-color: rgba(0, 240, 255, 0.08);
+    opacity: 0.9;
+  }
+
+  body.cursor-active .cursor-ring {
+    width: 30px;
+    height: 30px;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+
+  html[data-theme="vercel-dark"] .cursor-dot {
+    background-color: #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  }
+
+  html[data-theme="vercel-dark"] .cursor-ring {
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+
+  html[data-theme="vercel-light"] .cursor-dot {
+    background-color: #000000;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+  }
+
+  html[data-theme="vercel-light"] .cursor-ring {
+    border-color: rgba(0, 0, 0, 0.4);
+  }
+}
+
+@media (pointer: coarse) {
+  .cursor-dot, .cursor-ring, .cursor-glow {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   Surface Cards & Vercel Spotlight Illumination
    ========================================================================== */
 .glass-panel {
+  position: relative;
   background: var(--bg-glass-card);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--card-radius);
   box-shadow: var(--shadow-sm);
-  transition: all var(--transition-smooth);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  overflow: hidden;
+  --mouse-x: -500px;
+  --mouse-y: -500px;
 }
 
 .glass-panel:hover {
   border-color: var(--border-medium);
   box-shadow: var(--shadow-md);
+}
+
+/* Vercel Dynamic Spotlight Overlay */
+.glass-panel::before,
+.movie-card::before,
+.strategy-card::before,
+.hero-stat-box::before,
+.stage-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(420px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), var(--spotlight-color, rgba(0, 240, 255, 0.12)), transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 2;
+  border-radius: inherit;
+}
+
+.glass-panel:hover::before,
+.movie-card:hover::before,
+.strategy-card:hover::before,
+.hero-stat-box:hover::before,
+.stage-card:hover::before {
+  opacity: 1;
+}
+
+html[data-theme="antigravity"] {
+  --spotlight-color: rgba(0, 240, 255, 0.14);
+}
+
+html[data-theme="vercel-dark"] {
+  --spotlight-color: rgba(255, 255, 255, 0.11);
+}
+
+html[data-theme="vercel-light"] {
+  --spotlight-color: rgba(0, 0, 0, 0.05);
+}
+
+/* ==========================================================================
+   Realistic 3D Tilt Physics & Antigravity Levitation
+   ========================================================================== */
+.tilt-3d {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
+}
+
+.tilt-3d:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 
+              0 0 30px var(--accent-glow);
+}
+
+.tilt-3d > * {
+  transform: translateZ(14px);
+}
+
+.tilt-3d .card-visual {
+  transform: translateZ(28px);
+}
+
+.tilt-3d .movie-card-header,
+.tilt-3d .card-meta-chips,
+.tilt-3d .card-score-bar,
+.tilt-3d .card-actions {
+  transform: translateZ(16px);
+}
+
+/* Google Antigravity Zero-G Floating Levitation Animations */
+@keyframes antigravityFloat {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(0.4deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes antigravityFloatAlt {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(-0.5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+html[data-theme="antigravity"] .hero-card {
+  animation: antigravityFloat 7s ease-in-out infinite;
+}
+
+html[data-theme="antigravity"] .hero-stat-box:nth-child(odd) {
+  animation: antigravityFloat 5.5s ease-in-out infinite;
+}
+
+html[data-theme="antigravity"] .hero-stat-box:nth-child(even) {
+  animation: antigravityFloatAlt 6.5s ease-in-out infinite;
 }
 
 /* ==========================================================================

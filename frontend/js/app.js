@@ -185,10 +185,224 @@ document.addEventListener('DOMContentLoaded', () => {
     initUserProfiles();
     setupTabNavigation();
     setupEventListeners();
+    initAntigravityCanvas();
+    initCursorFX();
+    initSpotlightTracking();
+    init3DTiltEffects();
     await fetchGenres();
     await fetchMetrics();
     loadRecommendations();
     loadCatalog();
+  }
+
+  // ==========================================
+  // Vercel & Antigravity Interactive 3D Cursor FX
+  // ==========================================
+  const cursorDot = document.getElementById('cursorDot');
+  const cursorRing = document.getElementById('cursorRing');
+  const cursorGlow = document.getElementById('cursorGlow');
+  let mouse = { x: -200, y: -200 };
+  let ringPos = { x: -200, y: -200 };
+  let glowPos = { x: -200, y: -200 };
+
+  function initCursorFX() {
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+
+      if (cursorDot) {
+        cursorDot.style.left = `${mouse.x}px`;
+        cursorDot.style.top = `${mouse.y}px`;
+      }
+    }, { passive: true });
+
+    // Smooth lerp follower loop for ring and ambient glow
+    function renderCursor() {
+      ringPos.x += (mouse.x - ringPos.x) * 0.22;
+      ringPos.y += (mouse.y - ringPos.y) * 0.22;
+
+      glowPos.x += (mouse.x - glowPos.x) * 0.08;
+      glowPos.y += (mouse.y - glowPos.y) * 0.08;
+
+      if (cursorRing) {
+        cursorRing.style.left = `${ringPos.x}px`;
+        cursorRing.style.top = `${ringPos.y}px`;
+      }
+
+      if (cursorGlow) {
+        cursorGlow.style.left = `${glowPos.x}px`;
+        cursorGlow.style.top = `${glowPos.y}px`;
+      }
+
+      requestAnimationFrame(renderCursor);
+    }
+    requestAnimationFrame(renderCursor);
+
+    // Hover state magnetism & expansion on all interactive controls
+    const interactiveSelectors = 'button, a, input, select, .movie-card, .strategy-card, .hero-stat-box, .stage-card, .nav-tab, .pill-btn, .h-tab, .user-chip-btn, .page-btn, .strat-jump-btn';
+
+    document.addEventListener('mouseover', (e) => {
+      if (e.target.closest(interactiveSelectors)) {
+        document.body.classList.add('cursor-hover');
+      }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      if (e.target.closest(interactiveSelectors)) {
+        document.body.classList.remove('cursor-hover');
+      }
+    });
+
+    document.addEventListener('mousedown', () => {
+      document.body.classList.add('cursor-active');
+    });
+
+    document.addEventListener('mouseup', () => {
+      document.body.classList.remove('cursor-active');
+    });
+  }
+
+  // ==========================================
+  // Vercel Spotlight Illumination Tracking
+  // ==========================================
+  function initSpotlightTracking() {
+    document.addEventListener('mousemove', (e) => {
+      const cards = document.querySelectorAll('.glass-panel, .hero-card, .movie-card, .strategy-card, .hero-stat-box, .stage-card');
+      cards.forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        if (
+          e.clientX >= rect.left - 60 &&
+          e.clientX <= rect.right + 60 &&
+          e.clientY >= rect.top - 60 &&
+          e.clientY <= rect.bottom + 60
+        ) {
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          card.style.setProperty('--mouse-x', `${x}px`);
+          card.style.setProperty('--mouse-y', `${y}px`);
+        }
+      });
+    }, { passive: true });
+  }
+
+  // ==========================================
+  // Realistic 3D Tilt Physics (Inspired by Google Antigravity)
+  // ==========================================
+  function init3DTiltEffects() {
+    const tiltCards = '.movie-card, .strategy-card, .hero-stat-box, .stage-card, .studio-hero';
+
+    document.addEventListener('mousemove', (e) => {
+      const target = e.target.closest(tiltCards);
+      if (!target) return;
+
+      const rect = target.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const maxTilt = target.classList.contains('studio-hero') ? 3 : 7;
+      const rotateX = -((y - centerY) / centerY) * maxTilt;
+      const rotateY = ((x - centerX) / centerX) * maxTilt;
+
+      target.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(10px)`;
+    }, { passive: true });
+
+    document.addEventListener('mouseout', (e) => {
+      const target = e.target.closest(tiltCards);
+      if (target && !target.contains(e.relatedTarget)) {
+        target.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+      }
+    });
+  }
+
+  // ==========================================
+  // Google Antigravity Zero-G Physics Particle Field
+  // ==========================================
+  function initAntigravityCanvas() {
+    const canvas = document.getElementById('antigravityCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const PARTICLE_COUNT = 45;
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 2.2 + 0.8,
+        vx: (Math.random() - 0.5) * 0.45,
+        vy: -Math.random() * 0.5 - 0.15,
+        alpha: Math.random() * 0.5 + 0.2,
+        baseAlpha: Math.random() * 0.5 + 0.2,
+        pulseSpeed: Math.random() * 0.02 + 0.008,
+        colorType: Math.floor(Math.random() * 4),
+      });
+    }
+
+    function getParticleColor(type, alpha) {
+      if (state.theme === 'vercel-light') {
+        return `rgba(30, 30, 30, ${alpha * 0.4})`;
+      } else if (state.theme === 'vercel-dark') {
+        return `rgba(255, 255, 255, ${alpha * 0.6})`;
+      }
+      switch (type) {
+        case 0: return `rgba(0, 240, 255, ${alpha})`;
+        case 1: return `rgba(121, 40, 202, ${alpha})`;
+        case 2: return `rgba(255, 183, 3, ${alpha})`;
+        default: return `rgba(255, 255, 255, ${alpha})`;
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        const dx = p.x - mouse.x;
+        const dy = p.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const maxDist = 130;
+
+        if (dist < maxDist && dist > 0) {
+          const force = (1 - dist / maxDist) * 2.2;
+          p.x += (dx / dist) * force;
+          p.y += (dy / dist) * force;
+        }
+
+        if (p.y < -10) {
+          p.y = height + 10;
+          p.x = Math.random() * width;
+        }
+        if (p.x < -10) p.x = width + 10;
+        if (p.x > width + 10) p.x = -10;
+
+        p.alpha = p.baseAlpha + Math.sin(Date.now() * p.pulseSpeed) * 0.15;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = getParticleColor(p.colorType, Math.max(0.05, p.alpha));
+        ctx.fill();
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    requestAnimationFrame(draw);
   }
 
   // ==========================================
@@ -632,23 +846,6 @@ document.addEventListener('DOMContentLoaded', () => {
           select.appendChild(opt);
         });
       });
-
-      if (genreChipsSelector) {
-        genreChipsSelector.innerHTML = '';
-        const topStarterGenres = ['Sci-Fi', 'Action', 'Drama', 'Comedy', 'Thriller', 'Animation', 'Crime', 'Romance'];
-        topStarterGenres.forEach((g, idx) => {
-          const chip = document.createElement('button');
-          chip.type = 'button';
-          chip.className = `genre-chip ${idx === 0 ? 'active' : ''}`;
-          chip.textContent = g;
-          chip.addEventListener('click', () => {
-            genreChipsSelector.querySelectorAll('.genre-chip').forEach((c) => c.classList.remove('active'));
-            chip.classList.add('active');
-            state.selectedStarterGenre = g;
-          });
-          genreChipsSelector.appendChild(chip);
-        });
-      }
     } catch (err) {
       console.error('Failed to load genres:', err);
     }
@@ -896,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   function createMovieCard(movie, rank, showExplainability = false) {
     const card = document.createElement('div');
-    card.className = 'movie-card';
+    card.className = 'movie-card tilt-3d';
 
     const genreBadges = (movie.genres || [])
       .slice(0, 3)

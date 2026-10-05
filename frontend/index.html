@@ -15,6 +15,14 @@
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
 <body>
+  <!-- Google Antigravity Zero-G Physics Background Canvas -->
+  <canvas id="antigravityCanvas" class="antigravity-bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- Vercel & Antigravity Cursor FX -->
+  <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+  <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+  <div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
   <div class="app-container">
     
     <!-- ========================================== -->
@@ -99,7 +107,7 @@
       <!-- VIEW 1: DISCOVER (KEYNOTE HERO)           -->
       <!-- ========================================== -->
       <section class="view-panel active" id="viewHome">
-        <div class="hero-card studio-hero">
+        <div class="hero-card studio-hero tilt-3d">
           <div class="hero-eyebrow">Cinema Intelligence Studio</div>
           <h1 class="hero-title">
             Curated with intelligence.<br />
@@ -123,19 +131,19 @@
 
           <!-- Key Spec Metric Grid -->
           <div class="hero-stats-grid">
-            <div class="hero-stat-box">
+            <div class="hero-stat-box tilt-3d">
               <span class="hero-stat-val">+50%</span>
               <span class="hero-stat-lbl">Precision@10 Lift vs Prior</span>
             </div>
-            <div class="hero-stat-box">
+            <div class="hero-stat-box tilt-3d">
               <span class="hero-stat-val">23.2x</span>
               <span class="hero-stat-lbl">Catalog Exploration Surface</span>
             </div>
-            <div class="hero-stat-box">
+            <div class="hero-stat-box tilt-3d">
               <span class="hero-stat-val">&lt; 10ms</span>
               <span class="hero-stat-lbl">Real-time Inference Speed</span>
             </div>
-            <div class="hero-stat-box">
+            <div class="hero-stat-box tilt-3d">
               <span class="hero-stat-val">100k+</span>
               <span class="hero-stat-lbl">Verified MovieLens Ratings</span>
             </div>
@@ -149,7 +157,7 @@
         </div>
 
         <div class="strategies-grid">
-          <div class="strategy-card glass-panel" data-model-jump="hybrid">
+          <div class="strategy-card glass-panel tilt-3d" data-model-jump="hybrid">
             <div class="strat-icon">✨</div>
             <h3>Two-Stage Hybrid Engine</h3>
             <p class="strat-desc">
@@ -162,7 +170,7 @@
             <button class="strat-jump-btn" data-model="hybrid">Launch in For You &rarr;</button>
           </div>
 
-          <div class="strategy-card glass-panel" data-model-jump="item_collaborative">
+          <div class="strategy-card glass-panel tilt-3d" data-model-jump="item_collaborative">
             <div class="strat-icon">🤝</div>
             <h3>Item-Item Collaborative</h3>
             <p class="strat-desc">
@@ -175,7 +183,7 @@
             <button class="strat-jump-btn" data-model="item_collaborative">Launch in For You &rarr;</button>
           </div>
 
-          <div class="strategy-card glass-panel" data-model-jump="matrix_factorization_svd">
+          <div class="strategy-card glass-panel tilt-3d" data-model-jump="matrix_factorization_svd">
             <div class="strat-icon">🧠</div>
             <h3>Latent Factor SVD</h3>
             <p class="strat-desc">
@@ -188,7 +196,7 @@
             <button class="strat-jump-btn" data-model="matrix_factorization_svd">Launch in For You &rarr;</button>
           </div>
 
-          <div class="strategy-card glass-panel" data-model-jump="popularity">
+          <div class="strategy-card glass-panel tilt-3d" data-model-jump="popularity">
             <div class="strat-icon">📈</div>
             <h3>Bayesian Popularity Prior</h3>
             <p class="strat-desc">
@@ -600,7 +608,7 @@
             <div class="pipeline-stages">
               
               <!-- Stage 1 -->
-              <div class="stage-card" data-stage="1">
+              <div class="stage-card tilt-3d" data-stage="1">
                 <div class="stage-number">01</div>
                 <div class="stage-icon">📂</div>
                 <h4>Data Ingestion</h4>
@@ -613,7 +621,7 @@
               <div class="stage-arrow">&rarr;</div>
 
               <!-- Stage 2 -->
-              <div class="stage-card" data-stage="2">
+              <div class="stage-card tilt-3d" data-stage="2">
                 <div class="stage-number">02</div>
                 <div class="stage-icon">🧠</div>
                 <h4>Representation</h4>
@@ -626,7 +634,7 @@
               <div class="stage-arrow">&rarr;</div>
 
               <!-- Stage 3 -->
-              <div class="stage-card" data-stage="3">
+              <div class="stage-card tilt-3d" data-stage="3">
                 <div class="stage-number">03</div>
                 <div class="stage-icon">🎯</div>
                 <h4>Candidate Retrieval</h4>
@@ -639,7 +647,7 @@
               <div class="stage-arrow">&rarr;</div>
 
               <!-- Stage 4 -->
-              <div class="stage-card" data-stage="4">
+              <div class="stage-card tilt-3d" data-stage="4">
                 <div class="stage-number">04</div>
                 <div class="stage-icon">⚖️</div>
                 <h4>Ranking & Diversity</h4>
@@ -652,7 +660,7 @@
               <div class="stage-arrow">&rarr;</div>
 
               <!-- Stage 5 -->
-              <div class="stage-card" data-stage="5">
+              <div class="stage-card tilt-3d" data-stage="5">
                 <div class="stage-number">05</div>
                 <div class="stage-icon">🚀</div>
                 <h4>FastAPI Serving</h4>
