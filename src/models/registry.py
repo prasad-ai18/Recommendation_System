@@ -1,6 +1,6 @@
-"""Model registry for managing, training, and retrieving recommendation models."""
+"""Model registry for managing, training, registering, and retrieving recommendation models."""
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Type
 import pandas as pd
 
 from src.models.base import BaseRecommender
@@ -8,39 +8,71 @@ from src.models.popularity import PopularityRecommender
 from src.models.collaborative import ItemCollaborativeRecommender
 from src.models.matrix_factorization import MatrixFactorizationRecommender
 from src.models.hybrid import HybridRecommender
+from src.models.representations import UserItemRepresentations
 from src.logger import logger
 
 
 class ModelRegistry:
-    """Central registry and lifecycle manager for all recommendation models."""
+    """
+    Central registry and lifecycle manager for all recommendation models.
+    Supports dynamic registration of custom recommendation strategies for future model extensions.
+    """
+
+    _strategy_classes: Dict[str, Type[BaseRecommender]] = {}
 
     def __init__(self):
         self._models: Dict[str, BaseRecommender] = {}
+        self.representations = UserItemRepresentations()
         self.is_initialized = False
+
+    @classmethod
+    def register_strategy(cls, name: str):
+        """Class decorator for registering new recommendation algorithms modularly."""
+        def decorator(subclass: Type[BaseRecommender]):
+            cls._strategy_classes[name.lower()] = subclass
+            return subclass
+        return decorator
+
+    def register(self, name: str, model: BaseRecommender):
+        """Registers a model instance dynamically."""
+        self._models[name.lower()] = model
+        logger.info(f"Registered recommendation strategy: '{name}' ({type(model).__name__})")
 
     def register_default_models(self):
         """Initializes instances of all production models."""
-        self._models["popularity"] = PopularityRecommender()
-        self._models["item_collaborative"] = ItemCollaborativeRecommender()
-        self._models["matrix_factorization_svd"] = MatrixFactorizationRecommender()
-        self._models["hybrid"] = HybridRecommender()
+        self.register("popularity", PopularityRecommender())
+        self.register("item_collaborative", ItemCollaborativeRecommender())
+        self.register("matrix_factorization_svd", MatrixFactorizationRecommender())
+        self.register("hybrid", HybridRecommender())
 
     def fit_all(self, train_df: pd.DataFrame, movies_df: pd.DataFrame):
         """Fits all registered models on training interactions efficiently."""
         logger.info(f"Fitting all registered models ({list(self._models.keys())})...")
 
-        # Fit individual models
+        # Fit Popularity
         logger.info("Training model: 'popularity'...")
         pop_model = self._models["popularity"]
         pop_model.fit(train_df, movies_df)
 
+        # Fit Collaborative Filtering
         logger.info("Training model: 'item_collaborative'...")
         cf_model = self._models["item_collaborative"]
         cf_model.fit(train_df, movies_df)
 
+        # Fit Latent Factor SVD
         logger.info("Training model: 'matrix_factorization_svd'...")
-        svd_model = self._models["matrix_factorization_svd"]
+        svd_model: MatrixFactorizationRecommender = self._models["matrix_factorization_svd"]
         svd_model.fit(train_df, movies_df)
+
+        # Build Multidimensional User & Item Representations
+        self.representations.build_representations(
+            movies_df=movies_df,
+            train_df=train_df,
+            user_factors=svd_model.user_factors,
+            item_factors=svd_model.item_factors,
+            user_to_idx=svd_model.user_to_idx,
+            item_to_idx=svd_model.item_to_idx,
+        )
 
         # Wire pre-fitted submodels directly into Hybrid to avoid redundant refitting
         logger.info("Training model: 'hybrid'...")
@@ -48,6 +80,7 @@ class ModelRegistry:
         hybrid_model.popularity_model = pop_model
         hybrid_model.cf_model = cf_model
         hybrid_model.svd_model = svd_model
+        hybrid_model.representations = self.representations
         hybrid_model.fit_with_prefitted_submodels(train_df, movies_df)
 
         self.is_initialized = True
