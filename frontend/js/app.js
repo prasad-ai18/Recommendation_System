@@ -1,6 +1,7 @@
 /**
  * Cinema — Intelligent Recommendation Studio
- * Apple-Inspired Frontend Controller & Session Manager
+ * Google Antigravity & Vercel Multi-Theme Controller,
+ * Real Login Screen View, and Movie Thematic Visual Engine.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
       userId: 1,
       name: 'Alex Vance',
       avatar: 'A',
-      color: '#0071e3',
+      color: 'linear-gradient(135deg, #00f0ff 0%, #7928ca 100%)',
       role: 'Sci-Fi & Action Aficionado',
       ratingsCount: 232,
       primaryGenre: 'Sci-Fi',
@@ -21,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
       userId: 2,
       name: 'Sarah Connor',
       avatar: 'S',
-      color: '#34c759',
+      color: 'linear-gradient(135deg, #06d6a0 0%, #118ab2 100%)',
       role: 'Action & Crime Enthusiast',
       ratingsCount: 29,
       primaryGenre: 'Action',
@@ -30,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
       userId: 3,
       name: 'Marcus Cole',
       avatar: 'M',
-      color: '#ff9500',
+      color: 'linear-gradient(135deg, #ffb703 0%, #fb8500 100%)',
       role: 'Classic Cinema & Drama',
       ratingsCount: 39,
       primaryGenre: 'Drama',
@@ -39,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
       userId: 4,
       name: 'Elena Rostova',
       avatar: 'E',
-      color: '#af52de',
+      color: 'linear-gradient(135deg, #ff0054 0%, #ff5400 100%)',
       role: 'Comedy & Classics Aficionado',
       ratingsCount: 216,
       primaryGenre: 'Comedy',
@@ -48,11 +49,18 @@ document.addEventListener('DOMContentLoaded', () => {
       userId: 9999,
       name: 'Guest Explorer',
       avatar: '★',
-      color: '#ff2d55',
+      color: 'linear-gradient(135deg, #9d4edd 0%, #3a0ca3 100%)',
       role: 'Cold-Start Discovery Profile',
       ratingsCount: 0,
       primaryGenre: 'Uncalibrated',
     },
+  ];
+
+  // Available Themes: Google Antigravity, Vercel Dark, Vercel Light
+  const THEMES = [
+    { id: 'antigravity', name: 'Antigravity', icon: '🌌' },
+    { id: 'vercel-dark', name: 'Vercel Dark', icon: '▲' },
+    { id: 'vercel-light', name: 'Vercel Light', icon: '☀️' },
   ];
 
   // ==========================================
@@ -73,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     genres: [],
     liveFeedback: [],
     evaluationMetrics: null,
-    theme: localStorage.getItem('cinema_theme') || 'dark',
+    theme: localStorage.getItem('cinema_theme') || 'antigravity',
     selectedStarterGenre: 'Sci-Fi',
   };
 
@@ -104,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const brandLogo = document.getElementById('brandLogo');
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   const themeIcon = document.getElementById('themeIcon');
+  const themeLabel = document.getElementById('themeLabel');
   const userSelect = document.getElementById('userSelect');
 
   // Account Popover Elements
@@ -119,9 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnMenuSwitchAccount = document.getElementById('btnMenuSwitchAccount');
   const btnMenuSignOut = document.getElementById('btnMenuSignOut');
 
-  // Login Modal Elements
-  const loginModal = document.getElementById('loginModal');
-  const btnLoginClose = document.getElementById('btnLoginClose');
+  // Real Login View Elements
   const tabSelectProfile = document.getElementById('tabSelectProfile');
   const tabNewProfile = document.getElementById('tabNewProfile');
   const panelSelectProfile = document.getElementById('panelSelectProfile');
@@ -197,30 +204,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Theme Management (Bright vs Dark Eye Comfort)
+  // Theme Management (Google Antigravity, Vercel Dark, Vercel Light)
   // ==========================================
   function initTheme() {
+    // Validate saved theme or default to antigravity
+    if (!THEMES.some((t) => t.id === state.theme)) {
+      state.theme = 'antigravity';
+    }
     document.documentElement.setAttribute('data-theme', state.theme);
-    updateThemeIcon();
+    updateThemeUI();
   }
 
-  function toggleTheme() {
-    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  function cycleTheme() {
+    const currentIndex = THEMES.findIndex((t) => t.id === state.theme);
+    const nextIndex = (currentIndex + 1) % THEMES.length;
+    state.theme = THEMES[nextIndex].id;
     document.documentElement.setAttribute('data-theme', state.theme);
     localStorage.setItem('cinema_theme', state.theme);
-    updateThemeIcon();
-    showToast(`Switched to ${state.theme === 'dark' ? 'Dark Theme' : 'Bright Theme (Eye Comfort)'}`);
+    updateThemeUI();
+    showToast(`Theme switched to ${THEMES[nextIndex].name}`);
   }
 
-  function updateThemeIcon() {
-    if (themeIcon) {
-      themeIcon.textContent = state.theme === 'dark' ? '☀️' : '🌙';
-    }
+  function updateThemeUI() {
+    const currentTheme = THEMES.find((t) => t.id === state.theme) || THEMES[0];
+    if (themeIcon) themeIcon.textContent = currentTheme.icon;
+    if (themeLabel) themeLabel.textContent = currentTheme.name;
     if (themeToggleBtn) {
-      themeToggleBtn.setAttribute(
-        'title',
-        state.theme === 'dark' ? 'Switch to Bright Theme' : 'Switch to Dark Theme'
-      );
+      themeToggleBtn.setAttribute('title', `Active Theme: ${currentTheme.name} (Click to switch)`);
     }
   }
 
@@ -240,7 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
       saveProfilesToStorage();
     }
 
-    // Ensure active user exists
     let active = state.savedProfiles.find((p) => p.userId === state.userId);
     if (!active) {
       active = state.savedProfiles[0];
@@ -256,12 +265,11 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('cinema_user_profiles', JSON.stringify(state.savedProfiles));
   }
 
-  function setActiveUser(profile) {
+  function setActiveUser(profile, navigateToRecs = true) {
     state.currentUser = profile;
     state.userId = profile.userId;
     localStorage.setItem('cinema_active_user_id', profile.userId);
 
-    // Sync compatibility select if present
     if (userSelect) {
       userSelect.value = profile.userId;
     }
@@ -273,6 +281,10 @@ document.addEventListener('DOMContentLoaded', () => {
       loadUserProfile();
     }
     showToast(`Signed in as ${profile.name}`);
+
+    if (navigateToRecs) {
+      switchTab('recommendations');
+    }
   }
 
   function syncUserUI() {
@@ -321,29 +333,19 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="select-name">${escapeHtml(profile.name)}</span>
           <span class="select-desc">${escapeHtml(profile.role)} &bull; ${profile.ratingsCount} ratings</span>
         </div>
-        ${isActive ? '<span class="select-indicator">Active</span>' : ''}
+        ${isActive ? '<span class="select-indicator">Active</span>' : '<button class="action-btn btn-secondary" style="padding:4px 10px;font-size:0.75rem;">Switch</button>'}
       `;
 
       card.addEventListener('click', () => {
-        setActiveUser(profile);
-        closeLoginModal();
+        setActiveUser(profile, true);
       });
 
       loginProfilesGrid.appendChild(card);
     });
   }
 
-  function openLoginModal() {
-    if (loginModal) loginModal.classList.remove('hidden');
-    renderLoginProfilesList();
-  }
-
-  function closeLoginModal() {
-    if (loginModal) loginModal.classList.add('hidden');
-  }
-
   // ==========================================
-  // Tab Navigation Controller
+  // Tab Navigation Controller (Includes #viewLogin)
   // ==========================================
   function switchTab(targetTabId) {
     const cleanId = targetTabId.toLowerCase().trim();
@@ -373,6 +375,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (recommendationsGrid.children.length === 0 || recommendationsGrid.querySelector('.loading-state')) {
         loadRecommendations();
       }
+    } else if (cleanId === 'login') {
+      renderLoginProfilesList();
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -455,9 +459,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Event Listeners Setup
   // ==========================================
   function setupEventListeners() {
-    // Theme Switcher Button
+    // Theme Switcher Button -> Cycles Antigravity -> Vercel Dark -> Vercel Light
     if (themeToggleBtn) {
-      themeToggleBtn.addEventListener('click', toggleTheme);
+      themeToggleBtn.addEventListener('click', cycleTheme);
     }
 
     // Account Chip Click -> Toggle Dropdown
@@ -468,7 +472,6 @@ document.addEventListener('DOMContentLoaded', () => {
         accountDropdownMenu.classList.toggle('hidden');
       });
 
-      // Close popover when clicking anywhere outside
       document.addEventListener('click', (e) => {
         if (!userAccountWrapper.contains(e.target)) {
           userAccountWrapper.classList.remove('open');
@@ -490,33 +493,27 @@ document.addEventListener('DOMContentLoaded', () => {
       btnMenuSwitchAccount.addEventListener('click', () => {
         userAccountWrapper.classList.remove('open');
         accountDropdownMenu.classList.add('hidden');
-        openLoginModal();
+        switchTab('login');
       });
     }
 
     if (btnProfileSwitchUser) {
-      btnProfileSwitchUser.addEventListener('click', openLoginModal);
+      btnProfileSwitchUser.addEventListener('click', () => {
+        switchTab('login');
+      });
     }
 
     if (btnMenuSignOut) {
       btnMenuSignOut.addEventListener('click', () => {
         userAccountWrapper.classList.remove('open');
         accountDropdownMenu.classList.add('hidden');
-        // Set to Guest profile
         const guest = state.savedProfiles.find((p) => p.userId === 9999) || state.savedProfiles[0];
-        setActiveUser(guest);
+        setActiveUser(guest, true);
         showToast('Signed out of personalized profile. Guest mode active.');
       });
     }
 
-    // Login Modal Triggers
-    if (btnLoginClose) btnLoginClose.addEventListener('click', closeLoginModal);
-    if (loginModal) {
-      loginModal.addEventListener('click', (e) => {
-        if (e.target === loginModal) closeLoginModal();
-      });
-    }
-
+    // Real Login Screen Tabs
     if (tabSelectProfile && tabNewProfile) {
       tabSelectProfile.addEventListener('click', () => {
         tabSelectProfile.classList.add('active');
@@ -541,7 +538,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = parseInt(inputUserId.value, 10) || 1;
         if (!name) return;
 
-        const colors = ['#0071e3', '#af52de', '#34c759', '#ff9500', '#ff2d55', '#5856d6'];
+        const colors = [
+          'linear-gradient(135deg, #00f0ff 0%, #7928ca 100%)',
+          'linear-gradient(135deg, #06d6a0 0%, #118ab2 100%)',
+          'linear-gradient(135deg, #ffb703 0%, #fb8500 100%)',
+          'linear-gradient(135deg, #ff0054 0%, #ff5400 100%)',
+          'linear-gradient(135deg, #9d4edd 0%, #3a0ca3 100%)',
+        ];
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
         const newProfile = {
@@ -550,11 +553,10 @@ document.addEventListener('DOMContentLoaded', () => {
           avatar: name.charAt(0).toUpperCase(),
           color: randomColor,
           role: `${state.selectedStarterGenre} Enthusiast`,
-          ratingsCount: id === 9999 ? 0 : 50,
+          ratingsCount: id === 9999 ? 0 : 45,
           primaryGenre: state.selectedStarterGenre,
         };
 
-        // Add to saved profiles or update existing
         const idx = state.savedProfiles.findIndex((p) => p.userId === id);
         if (idx >= 0) {
           state.savedProfiles[idx] = newProfile;
@@ -563,8 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         saveProfilesToStorage();
-        setActiveUser(newProfile);
-        closeLoginModal();
+        setActiveUser(newProfile, true);
         newProfileForm.reset();
       });
     }
@@ -686,7 +687,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeModal();
-        closeLoginModal();
         if (userAccountWrapper) {
           userAccountWrapper.classList.remove('open');
           accountDropdownMenu.classList.add('hidden');
@@ -705,7 +705,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       state.genres = data.genres || [];
 
-      // Populate dropdowns
       [genreFilter, catalogGenreFilter].forEach((select) => {
         if (!select) return;
         select.innerHTML = '<option value="">All Genres</option>';
@@ -717,7 +716,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
 
-      // Populate Starter Genre Chips in New User Form
       if (genreChipsSelector) {
         genreChipsSelector.innerHTML = '';
         const topStarterGenres = ['Sci-Fi', 'Action', 'Drama', 'Comedy', 'Thriller', 'Animation', 'Crime', 'Romance'];
@@ -757,6 +755,153 @@ document.addEventListener('DOMContentLoaded', () => {
     const info = modelInfo[state.modelType] || modelInfo.hybrid;
     if (strategyBadge) strategyBadge.textContent = info.badge;
     if (strategyDesc) strategyDesc.textContent = info.desc;
+  }
+
+  // ==========================================
+  // Thematic Contextual Movie Visual Engine
+  // ==========================================
+  function getMovieVisualTheme(movie) {
+    const title = (movie.title || '').toLowerCase();
+    const genres = (movie.genres || []).map((g) => g.toLowerCase());
+    const gStr = genres.join(' ');
+
+    // Specific Franchise / Title Matches
+    if (title.includes('toy story')) {
+      return { emojis: '🧸 🚀 🦖', tag: 'Pixar Classic', gradient: 'linear-gradient(135deg, #1e3a8a 0%, #d97706 100%)' };
+    }
+    if (title.includes('star wars')) {
+      return { emojis: '⚔️ 🌌 🛸', tag: 'Galactic Saga', gradient: 'linear-gradient(135deg, #030712 0%, #1e1b4b 50%, #00f0ff 100%)' };
+    }
+    if (title.includes('matrix')) {
+      return { emojis: '🕶️ 💻 💊', tag: 'Cyberpunk Masterpiece', gradient: 'linear-gradient(135deg, #022c22 0%, #064e3b 100%)' };
+    }
+    if (title.includes('jumanji')) {
+      return { emojis: '🎲 🐒 🌿', tag: 'Jungle Adventure', gradient: 'linear-gradient(135deg, #064e3b 0%, #b45309 100%)' };
+    }
+    if (title.includes('heat')) {
+      return { emojis: '🕶️ 💼 💥', tag: 'Urban Crime Noir', gradient: 'linear-gradient(135deg, #0f172a 0%, #7f1d1d 100%)' };
+    }
+    if (title.includes('goldeneye') || title.includes('007') || title.includes('bond')) {
+      return { emojis: '🍸 🎯 🔫', tag: 'MI6 Espionage', gradient: 'linear-gradient(135deg, #1e293b 0%, #ca8a04 100%)' };
+    }
+    if (title.includes('casino')) {
+      return { emojis: '🎲 💵 🎰', tag: 'High-Stakes Crime', gradient: 'linear-gradient(135deg, #450a0a 0%, #b45309 100%)' };
+    }
+    if (title.includes('ace ventura')) {
+      return { emojis: '🦜 🤪 🌴', tag: 'Slapstick Comedy', gradient: 'linear-gradient(135deg, #164e63 0%, #ca8a04 100%)' };
+    }
+    if (title.includes('twelve monkeys') || title.includes('12 monkeys')) {
+      return { emojis: '⏳ 🧬 ☣️', tag: 'Dystopian Time Paradox', gradient: 'linear-gradient(135deg, #365314 0%, #0f172a 100%)' };
+    }
+    if (title.includes('babe')) {
+      return { emojis: '🐷 🐑 🌾', tag: 'Heartwarming Tale', gradient: 'linear-gradient(135deg, #065f46 0%, #f472b6 100%)' };
+    }
+    if (title.includes('dead man walking')) {
+      return { emojis: '⚖️ 🕯️ ⛓️', tag: 'Powerful Drama', gradient: 'linear-gradient(135deg, #1c1917 0%, #78350f 100%)' };
+    }
+    if (title.includes('clueless')) {
+      return { emojis: '🛍️ 💅 💄', tag: '90s Cult Classic', gradient: 'linear-gradient(135deg, #831843 0%, #f43f5e 100%)' };
+    }
+    if (title.includes('jurassic')) {
+      return { emojis: '🦖 🌋 🦟', tag: 'Prehistoric Sci-Fi', gradient: 'linear-gradient(135deg, #14532d 0%, #713f12 100%)' };
+    }
+    if (title.includes('pulp fiction')) {
+      return { emojis: '🍔 💼 💃', tag: 'Tarantino Masterpiece', gradient: 'linear-gradient(135deg, #450a0a 0%, #ea580c 100%)' };
+    }
+    if (title.includes('forrest gump')) {
+      return { emojis: '🍫 🏃‍♂️ 🪶', tag: 'Timeless Odyssey', gradient: 'linear-gradient(135deg, #0369a1 0%, #15803d 100%)' };
+    }
+    if (title.includes('lion king')) {
+      return { emojis: '🦁 🌅 👑', tag: 'Animation Epic', gradient: 'linear-gradient(135deg, #78350f 0%, #ea580c 100%)' };
+    }
+    if (title.includes('godfather') || title.includes('goodfellas')) {
+      return { emojis: '🎩 🌹 🍷', tag: 'Mobster Dynasty', gradient: 'linear-gradient(135deg, #18181b 0%, #881337 100%)' };
+    }
+    if (title.includes('fight club')) {
+      return { emojis: '🧼 🥊 🏢', tag: 'Psychological Cult', gradient: 'linear-gradient(135deg, #3f3f46 0%, #4c1d95 100%)' };
+    }
+    if (title.includes('inception')) {
+      return { emojis: '🌀 🏙️ ⏳', tag: 'Mind-Bending Dream', gradient: 'linear-gradient(135deg, #082f49 0%, #0284c7 100%)' };
+    }
+    if (title.includes('interstellar')) {
+      return { emojis: '🕳️ 🌌 ⏳', tag: 'Cosmic Journey', gradient: 'linear-gradient(135deg, #030712 0%, #312e81 100%)' };
+    }
+    if (title.includes('batman') || title.includes('dark knight')) {
+      return { emojis: '🦇 🃏 🏙️', tag: 'Gotham Vigilante', gradient: 'linear-gradient(135deg, #09090b 0%, #1e1b4b 100%)' };
+    }
+    if (title.includes('lord of the rings') || title.includes('hobbit')) {
+      return { emojis: '💍 🌋 ⚔️', tag: 'Middle-Earth Epic', gradient: 'linear-gradient(135deg, #451a03 0%, #b45309 100%)' };
+    }
+    if (title.includes('terminator')) {
+      return { emojis: '🤖 💀 ⚡', tag: 'Cyborg Sci-Fi', gradient: 'linear-gradient(135deg, #18181b 0%, #991b1b 100%)' };
+    }
+    if (title.includes('alien')) {
+      return { emojis: '👾 🚀 🥚', tag: 'Deep Space Horror', gradient: 'linear-gradient(135deg, #022c22 0%, #14532d 100%)' };
+    }
+    if (title.includes('blade runner')) {
+      return { emojis: '🦄 🌧️ 🏮', tag: 'Cyberpunk Noir', gradient: 'linear-gradient(135deg, #3b0764 0%, #0891b2 100%)' };
+    }
+    if (title.includes('sunset blvd')) {
+      return { emojis: '📽️ 🍸 📻', tag: 'Golden Age Hollywood', gradient: 'linear-gradient(135deg, #27272a 0%, #713f12 100%)' };
+    }
+
+    // Genre-Combination Fallbacks
+    if (gStr.includes('sci-fi') && gStr.includes('action')) {
+      return { emojis: '🚀 💥 ⚡', tag: 'Action Sci-Fi', gradient: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0284c7 100%)' };
+    }
+    if (gStr.includes('sci-fi')) {
+      return { emojis: '🌌 🚀 🛸', tag: 'Science Fiction', gradient: 'linear-gradient(135deg, #030712 0%, #1e1b4b 50%, #00f0ff 100%)' };
+    }
+    if (gStr.includes('action') && gStr.includes('thriller')) {
+      return { emojis: '💥 🏎️ 🎯', tag: 'Action Thriller', gradient: 'linear-gradient(135deg, #450a0a 0%, #18181b 50%, #b91c1c 100%)' };
+    }
+    if (gStr.includes('action')) {
+      return { emojis: '💥 🥋 ⚔️', tag: 'Action Packed', gradient: 'linear-gradient(135deg, #7f1d1d 0%, #ea580c 100%)' };
+    }
+    if (gStr.includes('crime') || gStr.includes('film-noir')) {
+      return { emojis: '🕵️‍♂️ 💼 🔫', tag: 'Crime & Suspense', gradient: 'linear-gradient(135deg, #18181b 0%, #3f3f46 50%, #78350f 100%)' };
+    }
+    if (gStr.includes('animation') || gStr.includes('children')) {
+      return { emojis: '🎨 🧸 🎈', tag: 'Animated Feature', gradient: 'linear-gradient(135deg, #0284c7 0%, #8b5cf6 50%, #f59e0b 100%)' };
+    }
+    if (gStr.includes('comedy') && gStr.includes('romance')) {
+      return { emojis: '🍿 ❤️ 🥂', tag: 'Romantic Comedy', gradient: 'linear-gradient(135deg, #be185d 0%, #f43f5e 50%, #fbbf24 100%)' };
+    }
+    if (gStr.includes('comedy')) {
+      return { emojis: '🍿 😂 🎉', tag: 'Comedy', gradient: 'linear-gradient(135deg, #854d0e 0%, #eab308 50%, #f97316 100%)' };
+    }
+    if (gStr.includes('horror')) {
+      return { emojis: '👁️ 🪓 🩸', tag: 'Horror', gradient: 'linear-gradient(135deg, #18181b 0%, #450a0a 50%, #7f1d1d 100%)' };
+    }
+    if (gStr.includes('romance')) {
+      return { emojis: '🌹 ❤️ 💌', tag: 'Romance', gradient: 'linear-gradient(135deg, #831843 0%, #9d174d 50%, #f43f5e 100%)' };
+    }
+    if (gStr.includes('fantasy')) {
+      return { emojis: '🔮 🐉 ⚔️', tag: 'High Fantasy', gradient: 'linear-gradient(135deg, #3b0764 0%, #581c87 50%, #7c3aed 100%)' };
+    }
+    if (gStr.includes('western')) {
+      return { emojis: '🤠 🌵 🐎', tag: 'Western', gradient: 'linear-gradient(135deg, #451a03 0%, #78350f 50%, #d97706 100%)' };
+    }
+    if (gStr.includes('drama')) {
+      return { emojis: '🎭 🕯️ 📜', tag: 'Drama', gradient: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)' };
+    }
+    if (gStr.includes('adventure')) {
+      return { emojis: '🧭 🗺️ ⛵', tag: 'Epic Adventure', gradient: 'linear-gradient(135deg, #065f46 0%, #047857 50%, #0284c7 100%)' };
+    }
+    if (gStr.includes('mystery')) {
+      return { emojis: '🔍 🗝️ 🌫️', tag: 'Mystery', gradient: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)' };
+    }
+    if (gStr.includes('documentary')) {
+      return { emojis: '📽️ 🌍 🎙️', tag: 'Documentary', gradient: 'linear-gradient(135deg, #14532d 0%, #166534 50%, #0284c7 100%)' };
+    }
+    if (gStr.includes('musical')) {
+      return { emojis: '🎵 🎷 💃', tag: 'Musical', gradient: 'linear-gradient(135deg, #701a75 0%, #86198f 50%, #d946ef 100%)' };
+    }
+    if (gStr.includes('war')) {
+      return { emojis: '🎖️ 🪖 🛡️', tag: 'War Epic', gradient: 'linear-gradient(135deg, #1c1917 0%, #292524 50%, #44403c 100%)' };
+    }
+
+    return { emojis: '🎬 🍿 📽️', tag: 'Cinema Feature', gradient: 'linear-gradient(135deg, #18181b 0%, #27272a 50%, #3f3f46 100%)' };
   }
 
   // ==========================================
@@ -802,7 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
       recommendationsGrid.innerHTML = `
         <div class="loading-state" style="color: var(--accent-rose)">
           <p>⚠️ Unable to load recommendations: ${err.message}</p>
-          <button class="action-btn btn-primary btn-apple" id="btnRetryRecs" style="margin-top: 12px">Retry</button>
+          <button class="action-btn btn-primary" id="btnRetryRecs" style="margin-top: 12px">Retry</button>
         </div>
       `;
       const retryBtn = document.getElementById('btnRetryRecs');
@@ -830,7 +975,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Movie Card Component Creation
+  // Movie Card Component Creation (With Thematic Poster Engine)
   // ==========================================
   function createMovieCard(movie, rank, showExplainability = false) {
     const card = document.createElement('div');
@@ -841,7 +986,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .map((g) => `<span class="genre-tag">${g}</span>`)
       .join('');
 
-    const visualIcon = getGenreEmoji(movie.genres);
+    const visual = getMovieVisualTheme(movie);
     const scoreVal = movie.predicted_score
       ? movie.predicted_score.toFixed(1)
       : movie.bayesian_score
@@ -849,10 +994,11 @@ document.addEventListener('DOMContentLoaded', () => {
       : '4.0';
 
     card.innerHTML = `
-      <div class="card-visual">
-        <span class="visual-pattern">${visualIcon}</span>
+      <div class="card-visual" style="background: ${visual.gradient}">
         ${rank ? `<div class="rank-index">#${rank}</div>` : ''}
         <div class="score-badge">${scoreVal}★</div>
+        <div class="visual-scene-emojis">${visual.emojis}</div>
+        <span class="visual-backdrop-tag">${visual.tag}</span>
       </div>
       <div class="card-body">
         <h3 class="movie-title" title="${escapeHtml(movie.title)}">
@@ -933,24 +1079,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function getGenreEmoji(genres = []) {
-    const gStr = genres.join(' ').toLowerCase();
-    if (gStr.includes('sci-fi')) return '🚀';
-    if (gStr.includes('action')) return '💥';
-    if (gStr.includes('animation')) return '🎨';
-    if (gStr.includes('comedy')) return '🍿';
-    if (gStr.includes('drama')) return '🎭';
-    if (gStr.includes('horror')) return '👁️';
-    if (gStr.includes('thriller')) return '⚡';
-    if (gStr.includes('romance')) return '❤️';
-    if (gStr.includes('fantasy')) return '🔮';
-    if (gStr.includes('crime')) return '🕵️';
-    if (gStr.includes('documentary')) return '📜';
-    if (gStr.includes('mystery')) return '🔍';
-    if (gStr.includes('adventure')) return '🧭';
-    return '🎬';
-  }
-
   // ==========================================
   // Feedback Closed-Loop Submission
   // ==========================================
@@ -1013,7 +1141,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Floating Apple Toasts
+  // Floating Toast Notifications
   // ==========================================
   function showToast(message, isError = false) {
     if (!toastContainer) return;
@@ -1258,14 +1386,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const safeTitle = escapeHtml(movie.title);
     const genresHtml = (movie.genres || []).map((g) => `<span class="genre-tag">${g}</span>`).join('');
+    const visual = getMovieVisualTheme(movie);
 
     modalBody.innerHTML = `
+      <div style="background:${visual.gradient};padding:24px;border-radius:var(--card-radius);margin-bottom:18px;text-align:center;position:relative;">
+        <div style="font-size:3.2rem;letter-spacing:0.15em;filter:drop-shadow(0 6px 14px rgba(0,0,0,0.4));">${visual.emojis}</div>
+        <span style="display:inline-block;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,0.5);padding:3px 10px;border-radius:var(--radius-full);margin-top:8px;">${visual.tag}</span>
+      </div>
+
       <h2 style="margin-bottom: 6px; font-size: 1.4rem;">${safeTitle}</h2>
       <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
         ${genresHtml}
       </div>
 
-      <div style="background:var(--bg-canvas);border:1px solid var(--border-subtle);padding:14px;border-radius:var(--radius-md);margin-bottom:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+      <div style="background:var(--bg-canvas);border:1px solid var(--border-subtle);padding:14px;border-radius:var(--card-radius);margin-bottom:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
         <div>
           <span style="font-size:0.75rem;color:var(--text-dim)">Average Rating</span>
           <div style="font-size:1.25rem;font-weight:700;color:var(--accent-amber)">${movie.rating_mean ? movie.rating_mean.toFixed(1) : '—'}★</div>
@@ -1292,7 +1426,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-subtle)">
-        <button class="action-btn btn-primary btn-apple" id="btnFindSimilar" style="width:100%;justify-content:center;">
+        <button class="action-btn btn-primary" id="btnFindSimilar" style="width:100%;justify-content:center;">
           Find Titles Similar To This
         </button>
       </div>
@@ -1371,7 +1505,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.switchTab = switchTab;
-  window.openLoginModal = openLoginModal;
 
   // Initialize Application
   init();

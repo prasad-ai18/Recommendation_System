@@ -5,7 +5,7 @@ def main():
     base = 'http://127.0.0.1:8000'
     checks = [
         ('/', 200, 'Cinema'),
-        ('/static/css/styles.css', 200, 'Apple-Inspired Visual Design System'),
+        ('/static/css/styles.css', 200, 'Google Antigravity'),
         ('/static/js/app.js', 200, 'Cinema — Intelligent Recommendation Studio'),
         ('/api/health', 200, 'healthy'),
         ('/api/users', 200, 'sample_users'),
