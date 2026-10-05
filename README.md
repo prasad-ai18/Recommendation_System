@@ -31,6 +31,75 @@ The platform implements a multi-stage recommendation pipeline (**Candidate Gener
 
 ---
 
+## 🏛️ End-to-End System Architecture
+
+```mermaid
+flowchart TD
+    subgraph DataPipeline ["1. Data Pipeline & Chronological Split"]
+        RAW[("MovieLens 100K<br/>(100,836 ratings, 610 users, 9,742 movies)")] --> CLEAN["Schema Validation & Metadata Cleaning"]
+        CLEAN --> BAYES["Bayesian Item Statistics (m=10 Prior)"]
+        CLEAN --> SPLIT["Chronological 80/10/10 Split (Leak-Free)"]
+        SPLIT --> TRAIN[("Train Set: 80,419 ratings")]
+        SPLIT --> VAL[("Val Set: 10,059 ratings")]
+        SPLIT --> TEST[("Held-out Test: 10,358 ratings")]
+    end
+
+    subgraph Representations ["2. Representation Engine"]
+        TRAIN --> CSR["User-Item Sparse Matrix (CSR)"]
+        CSR --> SVD["SVD Decomposition (35 Latent Factors)"]
+        TRAIN --> CENTROID["User Genre Affinity Vectors (Centroids)"]
+    end
+
+    subgraph CandidateGen ["3. Multi-Channel Candidate Retrieval (~80 items)"]
+        CSR --> CH1["Collaborative Filtering Channel<br/>(Item-Item Cosine Similarity)"]
+        SVD --> CH2["Latent Factor Channel<br/>(SVD Embedding Projections)"]
+        CENTROID --> CH3["Genre Affinity Channel<br/>(Top User Genre Seeds)"]
+        BAYES --> CH4["Popularity Prior Channel<br/>(Bayesian Dampened Ratings)"]
+        CH1 --> DEDUP["Candidate Deduplication & Seen Item Filter"]
+        CH2 --> DEDUP
+        CH3 --> DEDUP
+        CH4 --> DEDUP
+    end
+
+    subgraph RankingEngine ["4. Feature Ranking & Diversity"]
+        DEDUP --> RANK["Composite Feature Ranker<br/>0.35·CF + 0.35·SVD + 0.15·Genre + 0.15·Prior"]
+        RANK --> DIV["MMR Genre Diversity Penalty"]
+        DIV --> XAI["XAI Attribution Signal Generator"]
+        XAI --> TOPK["Top-K Recommendations"]
+    end
+
+    subgraph FastAPIServing ["5. FastAPI REST Serving (<10ms)"]
+        TOPK --> API["FastAPI Application"]
+        API --> ENDP1["GET /recommend/{user_id}"]
+        API --> ENDP2["GET /movies"]
+        API --> ENDP3["GET /users/{user_id}/profile"]
+        API --> ENDP4["GET /metrics"]
+        API --> FEEDBACK["POST /feedback (Closed Loop)"]
+        FEEDBACK -.->|"Update User Vector in Real Time"| CSR
+        FEEDBACK -.->|"Update Taste Centroid"| CENTROID
+    end
+
+    subgraph Evaluation ["6. Offline Benchmark Evaluator"]
+        TEST --> EVAL["Evaluator (Test interactions r >= 3.5)"]
+        TOPK -.-> EVAL
+        EVAL --> METRICS["Metrics: P@K, R@K, NDCG@K, HitRate@K, Coverage"]
+        METRICS --> CACHE[("data/cache/evaluation_metrics.json")]
+    end
+
+    subgraph AntigravityFrontend ["7. Antigravity Modern Frontend"]
+        API --> UI["Single Page Application (Dark/Light Mode)"]
+        UI --> VIEW1["Home & Key Stats"]
+        UI --> VIEW2["For You Recommendations"]
+        UI --> VIEW3["Explore Movie Catalog"]
+        UI --> VIEW4["User Profile & Taste Signature"]
+        UI --> VIEW5["Recommendation Analytics"]
+        UI --> VIEW6["Model Evaluation Benchmarks"]
+        UI --> VIEW7["System Architecture Pipeline"]
+    end
+```
+
+---
+
 ## 📁 Repository Structure
 
 ```
