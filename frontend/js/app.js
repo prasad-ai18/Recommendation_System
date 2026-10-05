@@ -1,22 +1,67 @@
 /**
- * RecSys AI — Personalized Recommendation Intelligence Platform
- * Frontend Application Controller
- * 
- * Features:
- * - 7 Complete Sections: Home, Recommendations, Explore Movies, User Profile,
- *   Recommendation Analytics, Model Evaluation, System Architecture.
- * - Antigravity Dark/Light Mode Switcher with LocalStorage persistence.
- * - Real API integration with MovieLens data, SVD embeddings, and Hybrid Ranker.
- * - Interactive Closed Feedback Loop (Ratings, Likes, Bookmarks).
- * - Real-time latency tracking and dynamic evaluation table rendering.
+ * Cinema — Intelligent Recommendation Studio
+ * Apple-Inspired Frontend Controller & Session Manager
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
+  // Default Profiles (Real MovieLens Archetypes)
+  // ==========================================
+  const DEFAULT_PROFILES = [
+    {
+      userId: 1,
+      name: 'Alex Vance',
+      avatar: 'A',
+      color: '#0071e3',
+      role: 'Sci-Fi & Action Aficionado',
+      ratingsCount: 232,
+      primaryGenre: 'Sci-Fi',
+    },
+    {
+      userId: 2,
+      name: 'Sarah Connor',
+      avatar: 'S',
+      color: '#34c759',
+      role: 'Action & Crime Enthusiast',
+      ratingsCount: 29,
+      primaryGenre: 'Action',
+    },
+    {
+      userId: 3,
+      name: 'Marcus Cole',
+      avatar: 'M',
+      color: '#ff9500',
+      role: 'Classic Cinema & Drama',
+      ratingsCount: 39,
+      primaryGenre: 'Drama',
+    },
+    {
+      userId: 4,
+      name: 'Elena Rostova',
+      avatar: 'E',
+      color: '#af52de',
+      role: 'Comedy & Classics Aficionado',
+      ratingsCount: 216,
+      primaryGenre: 'Comedy',
+    },
+    {
+      userId: 9999,
+      name: 'Guest Explorer',
+      avatar: '★',
+      color: '#ff2d55',
+      role: 'Cold-Start Discovery Profile',
+      ratingsCount: 0,
+      primaryGenre: 'Uncalibrated',
+    },
+  ];
+
+  // ==========================================
   // Application State
   // ==========================================
   const state = {
-    userId: 1,
+    userId: parseInt(localStorage.getItem('cinema_active_user_id'), 10) || 1,
+    currentUser: null,
+    savedProfiles: [],
     modelType: 'hybrid',
     k: 10,
     genreFilter: '',
@@ -25,30 +70,29 @@ document.addEventListener('DOMContentLoaded', () => {
     catalogSort: 'bayesian_score',
     catalogPage: 1,
     catalogTotalPages: 1,
-    sampleUsers: [],
     genres: [],
     liveFeedback: [],
     evaluationMetrics: null,
-    theme: localStorage.getItem('recsys_theme') || 'dark',
+    theme: localStorage.getItem('cinema_theme') || 'dark',
+    selectedStarterGenre: 'Sci-Fi',
   };
 
-  // Model Descriptions for Dynamic UI Headers
   const modelInfo = {
     hybrid: {
-      badge: 'Two-Stage Hybrid Intelligence (Production)',
-      desc: 'Retrieves candidate pools across Collaborative Neighborhoods, SVD Latent Projections, and Genre Seeds, then applies feature-weighted composite ranking with MMR diversity control.',
+      badge: 'Two-Stage Hybrid Engine (Production)',
+      desc: 'Retrieves candidate pools across Collaborative Networks, SVD Latent Projections, and Genre Seeds, then applies feature-weighted composite ranking with MMR diversity control.',
     },
     item_collaborative: {
       badge: 'Item-Item Collaborative Filtering',
-      desc: 'Computes item-item cosine similarities with shrinkage penalty. Surfaces items directly co-rated by users who shared preferences on seed titles.',
+      desc: 'Computes item-item cosine similarities with shrinkage penalty. Surfaces items directly co-rated by viewers who loved the same seed titles.',
     },
     matrix_factorization_svd: {
       badge: 'Latent Factor Matrix Factorization',
-      desc: 'Projects user preferences and item characteristics into a dense 35-dimensional latent embedding space using Singular Value Decomposition.',
+      desc: 'Projects viewer preferences and item characteristics into a dense 35-dimensional latent embedding space using regularized Singular Value Decomposition.',
     },
     popularity: {
-      badge: 'Popularity Baseline Prior',
-      desc: 'Ranks the catalog via Bayesian dampening weighted ratings (m=10 m-estimate). Guarantees reliable, high-confidence cold-start fallback recommendations.',
+      badge: 'Bayesian Popularity Prior',
+      desc: 'Ranks the catalog via Bayesian dampening weighted ratings (m=10 prior). Guarantees reliable, high-confidence cold-start fallback recommendations.',
     },
   };
 
@@ -57,12 +101,39 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   const navTabs = document.querySelectorAll('.nav-tab');
   const viewPanels = document.querySelectorAll('.view-panel');
-  const userSelect = document.getElementById('userSelect');
+  const brandLogo = document.getElementById('brandLogo');
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   const themeIcon = document.getElementById('themeIcon');
-  const brandLogo = document.getElementById('brandLogo');
+  const userSelect = document.getElementById('userSelect');
 
-  // Hero Controls (Home)
+  // Account Popover Elements
+  const userAccountWrapper = document.getElementById('userAccountWrapper');
+  const userChipBtn = document.getElementById('userChipBtn');
+  const navUserAvatar = document.getElementById('navUserAvatar');
+  const navUserName = document.getElementById('navUserName');
+  const accountDropdownMenu = document.getElementById('accountDropdownMenu');
+  const menuUserAvatar = document.getElementById('menuUserAvatar');
+  const menuUserName = document.getElementById('menuUserName');
+  const menuUserTaste = document.getElementById('menuUserTaste');
+  const btnMenuProfile = document.getElementById('btnMenuProfile');
+  const btnMenuSwitchAccount = document.getElementById('btnMenuSwitchAccount');
+  const btnMenuSignOut = document.getElementById('btnMenuSignOut');
+
+  // Login Modal Elements
+  const loginModal = document.getElementById('loginModal');
+  const btnLoginClose = document.getElementById('btnLoginClose');
+  const tabSelectProfile = document.getElementById('tabSelectProfile');
+  const tabNewProfile = document.getElementById('tabNewProfile');
+  const panelSelectProfile = document.getElementById('panelSelectProfile');
+  const panelNewProfile = document.getElementById('panelNewProfile');
+  const loginProfilesGrid = document.getElementById('loginProfilesGrid');
+  const newProfileForm = document.getElementById('newProfileForm');
+  const inputUserName = document.getElementById('inputUserName');
+  const inputUserId = document.getElementById('inputUserId');
+  const genreChipsSelector = document.getElementById('genreChipsSelector');
+  const btnProfileSwitchUser = document.getElementById('btnProfileSwitchUser');
+
+  // Hero Controls
   const btnHeroGoRecs = document.getElementById('btnHeroGoRecs');
   const btnHeroGoEvaluation = document.getElementById('btnHeroGoEvaluation');
   const btnHeroGoArchitecture = document.getElementById('btnHeroGoArchitecture');
@@ -112,14 +183,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const toastContainer = document.getElementById('toastContainer');
 
   // ==========================================
-  // Initialization Lifecycle
+  // Initialization
   // ==========================================
   async function init() {
     initTheme();
+    initUserProfiles();
     setupTabNavigation();
     setupEventListeners();
-    await fetchHealthAndStats();
-    await fetchSampleUsers();
     await fetchGenres();
     await fetchMetrics();
     loadRecommendations();
@@ -127,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Theme Management (Dark / Light Mode)
+  // Theme Management (Bright vs Dark Eye Comfort)
   // ==========================================
   function initTheme() {
     document.documentElement.setAttribute('data-theme', state.theme);
@@ -137,21 +207,139 @@ document.addEventListener('DOMContentLoaded', () => {
   function toggleTheme() {
     state.theme = state.theme === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', state.theme);
-    localStorage.setItem('recsys_theme', state.theme);
+    localStorage.setItem('cinema_theme', state.theme);
     updateThemeIcon();
-    showToast(`Switched to ${state.theme === 'dark' ? 'Dark' : 'Light'} Mode`);
+    showToast(`Switched to ${state.theme === 'dark' ? 'Dark Theme' : 'Bright Theme (Eye Comfort)'}`);
   }
 
   function updateThemeIcon() {
     if (themeIcon) {
-      themeIcon.textContent = state.theme === 'dark' ? '🌙' : '☀️';
+      themeIcon.textContent = state.theme === 'dark' ? '☀️' : '🌙';
     }
     if (themeToggleBtn) {
       themeToggleBtn.setAttribute(
         'title',
-        state.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'
+        state.theme === 'dark' ? 'Switch to Bright Theme' : 'Switch to Dark Theme'
       );
     }
+  }
+
+  // ==========================================
+  // Multi-User Profile Management & Storage
+  // ==========================================
+  function initUserProfiles() {
+    const rawSaved = localStorage.getItem('cinema_user_profiles');
+    if (rawSaved) {
+      try {
+        state.savedProfiles = JSON.parse(rawSaved);
+      } catch (e) {
+        state.savedProfiles = [...DEFAULT_PROFILES];
+      }
+    } else {
+      state.savedProfiles = [...DEFAULT_PROFILES];
+      saveProfilesToStorage();
+    }
+
+    // Ensure active user exists
+    let active = state.savedProfiles.find((p) => p.userId === state.userId);
+    if (!active) {
+      active = state.savedProfiles[0];
+      state.userId = active.userId;
+      localStorage.setItem('cinema_active_user_id', state.userId);
+    }
+    state.currentUser = active;
+    syncUserUI();
+    renderLoginProfilesList();
+  }
+
+  function saveProfilesToStorage() {
+    localStorage.setItem('cinema_user_profiles', JSON.stringify(state.savedProfiles));
+  }
+
+  function setActiveUser(profile) {
+    state.currentUser = profile;
+    state.userId = profile.userId;
+    localStorage.setItem('cinema_active_user_id', profile.userId);
+
+    // Sync compatibility select if present
+    if (userSelect) {
+      userSelect.value = profile.userId;
+    }
+
+    syncUserUI();
+    renderLoginProfilesList();
+    loadRecommendations();
+    if (document.getElementById('viewProfile').classList.contains('active')) {
+      loadUserProfile();
+    }
+    showToast(`Signed in as ${profile.name}`);
+  }
+
+  function syncUserUI() {
+    const u = state.currentUser;
+    if (!u) return;
+
+    if (navUserAvatar) {
+      navUserAvatar.textContent = u.avatar;
+      navUserAvatar.style.background = u.color || 'var(--accent-gradient)';
+    }
+    if (navUserName) navUserName.textContent = u.name;
+
+    if (menuUserAvatar) {
+      menuUserAvatar.textContent = u.avatar;
+      menuUserAvatar.style.background = u.color || 'var(--accent-gradient)';
+    }
+    if (menuUserName) menuUserName.textContent = u.name;
+    if (menuUserTaste) menuUserTaste.textContent = u.role;
+
+    if (recUserAvatar) {
+      recUserAvatar.textContent = u.avatar;
+      recUserAvatar.style.background = u.color || 'var(--accent-gradient)';
+    }
+    if (recUserTitle) recUserTitle.textContent = `Curated for ${u.name}`;
+    if (recUserTasteSummary) {
+      if (u.userId === 9999) {
+        recUserTasteSummary.textContent = 'Taste Signature: Uncalibrated Cold-Start Profile (Zero prior history)';
+      } else {
+        recUserTasteSummary.textContent = `Taste Signature: ${u.role} (${u.ratingsCount} verified ratings)`;
+      }
+    }
+  }
+
+  function renderLoginProfilesList() {
+    if (!loginProfilesGrid) return;
+    loginProfilesGrid.innerHTML = '';
+
+    state.savedProfiles.forEach((profile) => {
+      const card = document.createElement('div');
+      const isActive = profile.userId === state.userId;
+      card.className = `profile-select-card ${isActive ? 'active-profile' : ''}`;
+
+      card.innerHTML = `
+        <div class="select-avatar" style="background: ${profile.color || 'var(--accent-gradient)'}">${profile.avatar}</div>
+        <div class="select-info">
+          <span class="select-name">${escapeHtml(profile.name)}</span>
+          <span class="select-desc">${escapeHtml(profile.role)} &bull; ${profile.ratingsCount} ratings</span>
+        </div>
+        ${isActive ? '<span class="select-indicator">Active</span>' : ''}
+      `;
+
+      card.addEventListener('click', () => {
+        setActiveUser(profile);
+        closeLoginModal();
+      });
+
+      loginProfilesGrid.appendChild(card);
+    });
+  }
+
+  function openLoginModal() {
+    if (loginModal) loginModal.classList.remove('hidden');
+    renderLoginProfilesList();
+  }
+
+  function closeLoginModal() {
+    if (loginModal) loginModal.classList.add('hidden');
   }
 
   // ==========================================
@@ -177,19 +365,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Lazy triggers when entering tabs
     if (cleanId === 'profile') {
       loadUserProfile();
     } else if (cleanId === 'evaluation') {
       renderEvaluationTable();
     } else if (cleanId === 'recommendations') {
-      // Ensure recommendation grid is populated
       if (recommendationsGrid.children.length === 0 || recommendationsGrid.querySelector('.loading-state')) {
         loadRecommendations();
       }
     }
 
-    // Smooth scroll to top of main view container
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -201,12 +386,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Brand logo navigates to Home
     if (brandLogo) {
       brandLogo.addEventListener('click', () => switchTab('home'));
     }
 
-    // Hero Action Buttons
     if (btnHeroGoRecs) {
       btnHeroGoRecs.addEventListener('click', () => switchTab('recommendations'));
     }
@@ -217,7 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
       btnHeroGoArchitecture.addEventListener('click', () => switchTab('architecture'));
     }
 
-    // Strategy Spotlight jump buttons and cards
     document.querySelectorAll('.strat-jump-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -237,13 +419,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Pipeline interactive stage cards
     document.querySelectorAll('.stage-card').forEach((stage) => {
       stage.addEventListener('click', () => {
         document.querySelectorAll('.stage-card').forEach((s) => s.classList.remove('active'));
         stage.classList.add('active');
         const stageNum = stage.getAttribute('data-stage');
-        showToast(`Inspecting Pipeline Stage 0${stageNum}: ${stage.querySelector('h4').textContent}`);
+        showToast(`Inspecting Stage 0${stageNum}: ${stage.querySelector('h4').textContent}`);
       });
     });
   }
@@ -252,7 +433,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!modelInfo[modelName]) return;
     state.modelType = modelName;
 
-    // Update pill group
     if (modelPillGroup) {
       modelPillGroup.querySelectorAll('.pill-btn').forEach((btn) => {
         if (btn.getAttribute('data-model') === modelName) {
@@ -280,15 +460,112 @@ document.addEventListener('DOMContentLoaded', () => {
       themeToggleBtn.addEventListener('click', toggleTheme);
     }
 
-    // User Switcher
-    if (userSelect) {
-      userSelect.addEventListener('change', (e) => {
-        state.userId = parseInt(e.target.value, 10);
-        updateUserHeader();
-        loadRecommendations();
-        if (document.getElementById('viewProfile').classList.contains('active')) {
-          loadUserProfile();
+    // Account Chip Click -> Toggle Dropdown
+    if (userChipBtn && userAccountWrapper) {
+      userChipBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userAccountWrapper.classList.toggle('open');
+        accountDropdownMenu.classList.toggle('hidden');
+      });
+
+      // Close popover when clicking anywhere outside
+      document.addEventListener('click', (e) => {
+        if (!userAccountWrapper.contains(e.target)) {
+          userAccountWrapper.classList.remove('open');
+          accountDropdownMenu.classList.add('hidden');
         }
+      });
+    }
+
+    // Dropdown Actions
+    if (btnMenuProfile) {
+      btnMenuProfile.addEventListener('click', () => {
+        userAccountWrapper.classList.remove('open');
+        accountDropdownMenu.classList.add('hidden');
+        switchTab('profile');
+      });
+    }
+
+    if (btnMenuSwitchAccount) {
+      btnMenuSwitchAccount.addEventListener('click', () => {
+        userAccountWrapper.classList.remove('open');
+        accountDropdownMenu.classList.add('hidden');
+        openLoginModal();
+      });
+    }
+
+    if (btnProfileSwitchUser) {
+      btnProfileSwitchUser.addEventListener('click', openLoginModal);
+    }
+
+    if (btnMenuSignOut) {
+      btnMenuSignOut.addEventListener('click', () => {
+        userAccountWrapper.classList.remove('open');
+        accountDropdownMenu.classList.add('hidden');
+        // Set to Guest profile
+        const guest = state.savedProfiles.find((p) => p.userId === 9999) || state.savedProfiles[0];
+        setActiveUser(guest);
+        showToast('Signed out of personalized profile. Guest mode active.');
+      });
+    }
+
+    // Login Modal Triggers
+    if (btnLoginClose) btnLoginClose.addEventListener('click', closeLoginModal);
+    if (loginModal) {
+      loginModal.addEventListener('click', (e) => {
+        if (e.target === loginModal) closeLoginModal();
+      });
+    }
+
+    if (tabSelectProfile && tabNewProfile) {
+      tabSelectProfile.addEventListener('click', () => {
+        tabSelectProfile.classList.add('active');
+        tabNewProfile.classList.remove('active');
+        panelSelectProfile.classList.add('active');
+        panelNewProfile.classList.remove('active');
+      });
+
+      tabNewProfile.addEventListener('click', () => {
+        tabNewProfile.classList.add('active');
+        tabSelectProfile.classList.remove('active');
+        panelNewProfile.classList.add('active');
+        panelSelectProfile.classList.remove('active');
+      });
+    }
+
+    // New Profile Submission Form
+    if (newProfileForm) {
+      newProfileForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = inputUserName.value.trim();
+        const id = parseInt(inputUserId.value, 10) || 1;
+        if (!name) return;
+
+        const colors = ['#0071e3', '#af52de', '#34c759', '#ff9500', '#ff2d55', '#5856d6'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+        const newProfile = {
+          userId: id,
+          name: name,
+          avatar: name.charAt(0).toUpperCase(),
+          color: randomColor,
+          role: `${state.selectedStarterGenre} Enthusiast`,
+          ratingsCount: id === 9999 ? 0 : 50,
+          primaryGenre: state.selectedStarterGenre,
+        };
+
+        // Add to saved profiles or update existing
+        const idx = state.savedProfiles.findIndex((p) => p.userId === id);
+        if (idx >= 0) {
+          state.savedProfiles[idx] = newProfile;
+        } else {
+          state.savedProfiles.push(newProfile);
+        }
+
+        saveProfilesToStorage();
+        setActiveUser(newProfile);
+        closeLoginModal();
+        newProfileForm.reset();
       });
     }
 
@@ -406,83 +683,20 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Global ESC key listener to close modals
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') {
+        closeModal();
+        closeLoginModal();
+        if (userAccountWrapper) {
+          userAccountWrapper.classList.remove('open');
+          accountDropdownMenu.classList.add('hidden');
+        }
+      }
     });
   }
 
   // ==========================================
-  // Fetch System Health & Statistics
-  // ==========================================
-  async function fetchHealthAndStats() {
-    try {
-      const res = await fetch('/api/health');
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.dataset) {
-        const elRatings = document.getElementById('statRatings');
-        const elUsers = document.getElementById('statUsers');
-        const elMovies = document.getElementById('statMovies');
-        if (elRatings) elRatings.textContent = (data.dataset.total_ratings || 100836).toLocaleString();
-        if (elUsers) elUsers.textContent = (data.dataset.total_users || 610).toLocaleString();
-        if (elMovies) elMovies.textContent = (data.dataset.total_movies || 9742).toLocaleString();
-      }
-    } catch (err) {
-      console.warn('Could not fetch /api/health:', err);
-    }
-  }
-
-  // ==========================================
-  // Fetch Sample Users
-  // ==========================================
-  async function fetchSampleUsers() {
-    try {
-      const res = await fetch('/api/users');
-      if (!res.ok) return;
-      const data = await res.json();
-      state.sampleUsers = data.sample_users || [];
-
-      if (userSelect) {
-        userSelect.innerHTML = '';
-        state.sampleUsers.forEach((u) => {
-          const opt = document.createElement('option');
-          opt.value = u.user_id;
-          opt.textContent = u.label;
-          userSelect.appendChild(opt);
-        });
-      }
-
-      if (state.sampleUsers.length > 0) {
-        state.userId = state.sampleUsers[0].user_id;
-      }
-      updateUserHeader();
-    } catch (err) {
-      console.error('Failed to load sample users:', err);
-    }
-  }
-
-  function updateUserHeader() {
-    const user = state.sampleUsers.find((u) => u.user_id === state.userId);
-    if (!recUserAvatar || !recUserTitle || !recUserTasteSummary) return;
-
-    if (user) {
-      recUserAvatar.textContent = `U${user.user_id === 9999 ? '★' : user.user_id}`;
-      recUserTitle.textContent = `Personalized Recommendations for User ${user.user_id}`;
-      if (user.user_id === 9999) {
-        recUserTasteSummary.textContent = 'Taste Profile: Uncalibrated Cold-Start User (No prior ratings)';
-      } else {
-        recUserTasteSummary.textContent = `Taste Profile: ${user.primary_genre} Enthusiast (${user.ratings_count} verified ratings)`;
-      }
-    } else {
-      recUserAvatar.textContent = `U${state.userId}`;
-      recUserTitle.textContent = `Personalized Recommendations for User ${state.userId}`;
-      recUserTasteSummary.textContent = 'Taste Profile: Custom User Profile';
-    }
-  }
-
-  // ==========================================
-  // Fetch Genres
+  // Fetch Genres & Render Starter Chips
   // ==========================================
   async function fetchGenres() {
     try {
@@ -491,6 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       state.genres = data.genres || [];
 
+      // Populate dropdowns
       [genreFilter, catalogGenreFilter].forEach((select) => {
         if (!select) return;
         select.innerHTML = '<option value="">All Genres</option>';
@@ -501,6 +716,24 @@ document.addEventListener('DOMContentLoaded', () => {
           select.appendChild(opt);
         });
       });
+
+      // Populate Starter Genre Chips in New User Form
+      if (genreChipsSelector) {
+        genreChipsSelector.innerHTML = '';
+        const topStarterGenres = ['Sci-Fi', 'Action', 'Drama', 'Comedy', 'Thriller', 'Animation', 'Crime', 'Romance'];
+        topStarterGenres.forEach((g, idx) => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = `genre-chip ${idx === 0 ? 'active' : ''}`;
+          chip.textContent = g;
+          chip.addEventListener('click', () => {
+            genreChipsSelector.querySelectorAll('.genre-chip').forEach((c) => c.classList.remove('active'));
+            chip.classList.add('active');
+            state.selectedStarterGenre = g;
+          });
+          genreChipsSelector.appendChild(chip);
+        });
+      }
     } catch (err) {
       console.error('Failed to load genres:', err);
     }
@@ -535,7 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
     recommendationsGrid.innerHTML = `
       <div class="loading-state">
         <div class="spinner"></div>
-        <p>Retrieving candidate pool & ranking top items for User ${state.userId}...</p>
+        <p>Curating personalized recommendations for ${escapeHtml(state.currentUser ? state.currentUser.name : `User ${state.userId}`)}...</p>
       </div>
     `;
 
@@ -555,7 +788,6 @@ document.addEventListener('DOMContentLoaded', () => {
         statLatency.textContent = `${data.latency_ms} ms`;
       }
 
-      // Cold start banner visibility
       if (coldStartBanner) {
         if (data.is_cold_start) {
           coldStartBanner.classList.remove('hidden');
@@ -569,8 +801,8 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error fetching recommendations:', err);
       recommendationsGrid.innerHTML = `
         <div class="loading-state" style="color: var(--accent-rose)">
-          <p>⚠️ Failed to load recommendations: ${err.message}</p>
-          <button class="action-btn btn-primary" id="btnRetryRecs" style="margin-top: 12px">Retry Request</button>
+          <p>⚠️ Unable to load recommendations: ${err.message}</p>
+          <button class="action-btn btn-primary btn-apple" id="btnRetryRecs" style="margin-top: 12px">Retry</button>
         </div>
       `;
       const retryBtn = document.getElementById('btnRetryRecs');
@@ -584,7 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!items || items.length === 0) {
       recommendationsGrid.innerHTML = `
         <div class="loading-state">
-          <p>No recommendations match the current filters. Try changing the genre filter or switching algorithms.</p>
+          <p>No titles match the selected genre filters. Try choosing "All Genres" or switching the recommendation engine.</p>
         </div>
       `;
       return;
@@ -624,7 +856,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div class="card-body">
         <h3 class="movie-title" title="${escapeHtml(movie.title)}">
-          ${movie.title}
+          ${escapeHtml(movie.title)}
         </h3>
         <div class="genre-tags">${genreBadges}</div>
         
@@ -643,7 +875,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="star-btn" data-star="5" title="Rate 5 Stars">★</button>
           </div>
           <div class="quick-actions">
-            <button class="icon-btn btn-like" data-movie-id="${movie.movie_id}" title="Like Movie">👍</button>
+            <button class="icon-btn btn-like" data-movie-id="${movie.movie_id}" title="Like Title">👍</button>
             <button class="icon-btn btn-bookmark" data-movie-id="${movie.movie_id}" title="Save to Watchlist">🔖</button>
             <button class="icon-btn btn-details" data-movie-id="${movie.movie_id}" title="View Details">ℹ️</button>
           </div>
@@ -651,7 +883,6 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Hook up Star Ratings
     const starBtns = card.querySelectorAll('.star-btn');
     starBtns.forEach((btn) => {
       btn.addEventListener('click', (e) => {
@@ -662,7 +893,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Like button
     const likeBtn = card.querySelector('.btn-like');
     if (likeBtn) {
       likeBtn.addEventListener('click', (e) => {
@@ -672,7 +902,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Bookmark button
     const bmBtn = card.querySelector('.btn-bookmark');
     if (bmBtn) {
       bmBtn.addEventListener('click', (e) => {
@@ -682,7 +911,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Details button
     const detailsBtn = card.querySelector('.btn-details');
     if (detailsBtn) {
       detailsBtn.addEventListener('click', (e) => {
@@ -744,16 +972,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error('Feedback request failed');
       await res.json();
 
-      // Toast feedback confirmation
       const actionText =
         interactionType === 'rating'
           ? `rated ${rating}★`
           : interactionType === 'like'
           ? 'liked'
           : 'bookmarked';
-      showToast(`User ${state.userId} ${actionText} "${movieTitle}"`);
+      showToast(`${state.currentUser ? state.currentUser.name : 'You'} ${actionText} "${movieTitle}"`);
 
-      // Record in session live feedback log
       state.liveFeedback.unshift({
         movie_id: movieId,
         title: movieTitle,
@@ -766,15 +992,13 @@ document.addEventListener('DOMContentLoaded', () => {
         feedbackCountBadge.textContent = state.liveFeedback.length;
       }
 
-      // If user was cold-start demo (User 9999), un-flag banner & update taste note
       if (state.userId === 9999) {
         if (coldStartBanner) coldStartBanner.classList.add('hidden');
         if (recUserTasteSummary) {
-          recUserTasteSummary.textContent = 'Taste Profile: Calibrating live from new feedback events!';
+          recUserTasteSummary.textContent = 'Taste Signature: Calibrating live from new feedback events!';
         }
       }
 
-      // If on Profile view and Live Feedback tab is active, re-render
       if (
         document.getElementById('viewProfile').classList.contains('active') &&
         tabLiveFeedback &&
@@ -789,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Floating Toast Notifications
+  // Floating Apple Toasts
   // ==========================================
   function showToast(message, isError = false) {
     if (!toastContainer) return;
@@ -799,21 +1023,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isError) toast.style.borderColor = 'var(--accent-rose)';
 
     toast.innerHTML = `
-      <span>${isError ? '⚠️' : '✅'}</span>
+      <span>${isError ? '⚠️' : '✓'}</span>
       <span>${escapeHtml(message)}</span>
     `;
 
     toastContainer.appendChild(toast);
     setTimeout(() => {
       toast.style.opacity = '0';
-      toast.style.transform = 'translateY(12px)';
+      toast.style.transform = 'translateY(12px) scale(0.96)';
       toast.style.transition = 'all 0.3s ease-out';
       setTimeout(() => toast.remove(), 300);
     }, 3200);
   }
 
   // ==========================================
-  // Catalog Explorer Loader & Renderer
+  // Catalog Explorer
   // ==========================================
   async function loadCatalog() {
     if (!catalogGrid) return;
@@ -821,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', () => {
     catalogGrid.innerHTML = `
       <div class="loading-state">
         <div class="spinner"></div>
-        <p>Loading MovieLens catalog items...</p>
+        <p>Loading Cinema catalog...</p>
       </div>
     `;
 
@@ -845,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (catalogCountInfo) {
         const startIdx = Math.min(data.total_count, (data.page - 1) * 18 + 1);
         const endIdx = Math.min(data.total_count, data.page * 18);
-        catalogCountInfo.textContent = `Showing ${startIdx}-${endIdx} of ${data.total_count.toLocaleString()} movies`;
+        catalogCountInfo.textContent = `Showing ${startIdx}-${endIdx} of ${data.total_count.toLocaleString()} titles`;
       }
 
       if (btnPrevPage) btnPrevPage.disabled = data.page <= 1;
@@ -854,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCatalog(data.movies || []);
     } catch (err) {
       console.error('Catalog load error:', err);
-      catalogGrid.innerHTML = `<div class="loading-state" style="color:var(--accent-rose)">Failed to load catalog movies.</div>`;
+      catalogGrid.innerHTML = `<div class="loading-state" style="color:var(--accent-rose)">Failed to load catalog titles.</div>`;
     }
   }
 
@@ -862,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!catalogGrid) return;
 
     if (!movies || movies.length === 0) {
-      catalogGrid.innerHTML = `<div class="loading-state"><p>No movies match your search filters.</p></div>`;
+      catalogGrid.innerHTML = `<div class="loading-state"><p>No titles found matching your search.</p></div>`;
       return;
     }
 
@@ -883,11 +1107,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) return;
       cachedUserProfile = await res.json();
 
+      const u = state.currentUser;
       if (profileLargeAvatar) {
-        profileLargeAvatar.textContent = `U${cachedUserProfile.user_id === 9999 ? '★' : cachedUserProfile.user_id}`;
+        profileLargeAvatar.textContent = u ? u.avatar : 'U';
+        profileLargeAvatar.style.background = u ? u.color : 'var(--accent-gradient)';
       }
       if (profileName) {
-        profileName.textContent = `User ${cachedUserProfile.user_id}`;
+        profileName.textContent = u ? u.name : `User ${state.userId}`;
+      }
+      if (profileTagline) {
+        profileTagline.textContent = u ? u.role : 'Taste Signature';
       }
       if (profileRatedCount) {
         profileRatedCount.textContent = cachedUserProfile.ratings_count.toLocaleString();
@@ -900,7 +1129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cachedUserProfile.top_genres && cachedUserProfile.top_genres.length > 0) {
           profilePrimaryTaste.textContent = cachedUserProfile.top_genres[0].genre;
         } else {
-          profilePrimaryTaste.textContent = 'General / Cold-Start';
+          profilePrimaryTaste.textContent = u ? u.primaryGenre : 'General';
         }
       }
 
@@ -918,18 +1147,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 <strong>${g.affinity_score.toFixed(1)}★ (${pct}%)</strong>
               </div>
               <div class="progress-bar-container">
-                <div class="progress-fill fill-cyan" style="width: ${pct}%"></div>
+                <div class="progress-fill fill-blue" style="width: ${pct}%"></div>
               </div>
             `;
             profileGenreBars.appendChild(bar);
           });
         } else {
           profileGenreBars.innerHTML =
-            '<p style="font-size:0.85rem;color:var(--text-dim)">No historical ratings to compute genre affinities.</p>';
+            '<p style="font-size:0.85rem;color:var(--text-dim);padding:8px 0;">No historical ratings recorded to compute genre affinities.</p>';
         }
       }
 
-      // Default to Historical Ratings Tab
       if (tabHistoricalRatings) tabHistoricalRatings.classList.add('active');
       if (tabLiveFeedback) tabLiveFeedback.classList.remove('active');
       renderHistoricalRatings();
@@ -943,7 +1171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!cachedUserProfile || !cachedUserProfile.recent_ratings || cachedUserProfile.recent_ratings.length === 0) {
       historyContent.innerHTML =
-        '<p style="color:var(--text-dim);font-size:0.9rem;padding:16px;">No historical ratings recorded for this user profile.</p>';
+        '<p style="color:var(--text-dim);font-size:0.9rem;padding:24px;text-align:center;">No historical ratings recorded for this user.</p>';
       return;
     }
 
@@ -964,7 +1192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (state.liveFeedback.length === 0) {
       historyContent.innerHTML =
-        '<p style="color:var(--text-dim);font-size:0.9rem;padding:16px;">No live feedback recorded yet in this session. Rate or like movies in "Recommendations" or "Explore Movies" to see live updates!</p>';
+        '<p style="color:var(--text-dim);font-size:0.9rem;padding:24px;text-align:center;">No live feedback recorded yet in this session. Rate or like movies in "For You" or "Explore" to see live updates!</p>';
       return;
     }
 
@@ -993,10 +1221,10 @@ document.addEventListener('DOMContentLoaded', () => {
     tableBody.innerHTML = '';
 
     const modelDisplayNames = {
-      popularity: 'Popularity Baseline',
-      item_collaborative: 'Item-Item Collaborative Filtering',
+      popularity: 'Bayesian Popularity Prior',
+      item_collaborative: 'Item-Item Collaborative',
       matrix_factorization_svd: 'Latent Factor SVD (35-dim)',
-      hybrid: 'Two-Stage Hybrid Engine (👑 Production Winner)',
+      hybrid: 'Two-Stage Hybrid Engine (👑 Production)',
     };
 
     Object.keys(models).forEach((key) => {
@@ -1037,7 +1265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ${genresHtml}
       </div>
 
-      <div style="background:var(--bg-glass-card);border:1px solid var(--border-subtle);padding:14px;border-radius:var(--radius-md);margin-bottom:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+      <div style="background:var(--bg-canvas);border:1px solid var(--border-subtle);padding:14px;border-radius:var(--radius-md);margin-bottom:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
         <div>
           <span style="font-size:0.75rem;color:var(--text-dim)">Average Rating</span>
           <div style="font-size:1.25rem;font-weight:700;color:var(--accent-amber)">${movie.rating_mean ? movie.rating_mean.toFixed(1) : '—'}★</div>
@@ -1048,7 +1276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div>
           <span style="font-size:0.75rem;color:var(--text-dim)">Predicted Affinity</span>
-          <div style="font-size:1.25rem;font-weight:700;color:var(--accent-cyan)">${movie.predicted_score ? `${movie.predicted_score.toFixed(1)}★` : '—'}</div>
+          <div style="font-size:1.25rem;font-weight:700;color:var(--accent-blue)">${movie.predicted_score ? `${movie.predicted_score.toFixed(1)}★` : '—'}</div>
         </div>
       </div>
 
@@ -1064,15 +1292,14 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-subtle)">
-        <button class="action-btn btn-primary" id="btnFindSimilar" style="width:100%;justify-content:center;">
-          Find Movies Similar To This
+        <button class="action-btn btn-primary btn-apple" id="btnFindSimilar" style="width:100%;justify-content:center;">
+          Find Titles Similar To This
         </button>
       </div>
 
       <div id="modalSimilarMovies" style="margin-top:16px;"></div>
     `;
 
-    // Hook up modal star ratings
     const modalStars = modalBody.querySelectorAll('#modalStars .star-btn');
     modalStars.forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1082,7 +1309,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Hook up Similar Movies button
     const btnFindSimilar = modalBody.querySelector('#btnFindSimilar');
     if (btnFindSimilar) {
       btnFindSimilar.addEventListener('click', () => {
@@ -1110,7 +1336,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error('Similar fetch failed');
       const data = await res.json();
 
-      container.innerHTML = '<h5 style="margin-bottom:8px;font-size:0.85rem;color:var(--accent-cyan)">Similar Recommendations via Collaborative Filtering:</h5>';
+      container.innerHTML = '<h5 style="margin-bottom:8px;font-size:0.85rem;color:var(--accent-blue)">Similar Recommendations:</h5>';
       const list = document.createElement('div');
       list.style.display = 'flex';
       list.style.flexDirection = 'column';
@@ -1121,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         row.className = 'history-item';
         row.innerHTML = `
           <span>${escapeHtml(m.title)}</span>
-          <span style="color:var(--accent-cyan);font-weight:600;">${m.predicted_score.toFixed(1)}★</span>
+          <span style="color:var(--accent-blue);font-weight:600;">${m.predicted_score.toFixed(1)}★</span>
         `;
         list.appendChild(row);
       });
@@ -1144,8 +1370,8 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/'/g, '&#039;');
   }
 
-  // Expose global tab switcher for inline anchors if needed
   window.switchTab = switchTab;
+  window.openLoginModal = openLoginModal;
 
   // Initialize Application
   init();

@@ -3,153 +3,130 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RecSys AI — Personalized Recommendation Intelligence Platform</title>
-  <meta name="description" content="Production-ready Personalized Recommendation Intelligence Platform with multi-stage candidate retrieval, SVD latent factor embeddings, and verified offline evaluation." />
+  <title>Cinema — Intelligent Recommendation Studio</title>
+  <meta name="description" content="Experience precision personalization with multi-channel candidate generation, SVD latent embeddings, and real-time taste calibration." />
   
-  <!-- Fonts -->
+  <!-- Apple & Modern Web Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Main Styles -->
+  <!-- Main Stylesheet -->
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
 <body>
   <div class="app-container">
     
-    <!-- Top Global Navigation Bar -->
+    <!-- ========================================== -->
+    <!-- APPLE-INSPIRED TRANSLUCENT NAVIGATION BAR -->
+    <!-- ========================================== -->
     <header class="navbar">
-      <div class="nav-brand" id="brandLogo" style="cursor: pointer;">
+      <div class="nav-brand" id="brandLogo" role="button" tabindex="0" title="Cinema Home">
         <div class="brand-icon">
-          <span class="pulse-ring"></span>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          <!-- Minimalist Cinema Prism Icon -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+            <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
           </svg>
         </div>
         <div class="brand-text">
-          <span class="brand-title">RecSys<span class="gradient-text">.AI</span></span>
-          <span class="brand-subtitle">Recommendation Intelligence</span>
+          <span class="brand-title">Cinema</span>
+          <span class="brand-tag">Studio</span>
         </div>
       </div>
 
-      <!-- Navigation Tabs (7 Required Sections) -->
-      <nav class="nav-tabs" id="navTabs">
-        <button class="nav-tab active" data-tab="home" id="tabHome">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-          Home
-        </button>
-        <button class="nav-tab" data-tab="recommendations" id="tabRecommendations">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-          Recommendations
-        </button>
-        <button class="nav-tab" data-tab="catalog" id="tabCatalog">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          Explore Movies
-        </button>
-        <button class="nav-tab" data-tab="profile" id="tabProfile">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          User Profile
-        </button>
-        <button class="nav-tab" data-tab="analytics" id="tabAnalytics">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-          Analytics
-        </button>
-        <button class="nav-tab" data-tab="evaluation" id="tabEvaluation">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34"></path><path d="M18 14.66V17c0 .55-.45 1-1 1h-2c-.55 0-1-.45-1-1v-2.34"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>
-          Model Evaluation
-        </button>
-        <button class="nav-tab" data-tab="architecture" id="tabArchitecture">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-          Architecture
-        </button>
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs" id="navTabs" aria-label="Main Navigation">
+        <button class="nav-tab active" data-tab="home" id="tabHome">Discover</button>
+        <button class="nav-tab" data-tab="recommendations" id="tabRecommendations">For You</button>
+        <button class="nav-tab" data-tab="catalog" id="tabCatalog">Explore</button>
+        <button class="nav-tab" data-tab="profile" id="tabProfile">Profile</button>
+        <button class="nav-tab" data-tab="analytics" id="tabAnalytics">Intelligence</button>
+        <button class="nav-tab" data-tab="evaluation" id="tabEvaluation">Benchmarks</button>
+        <button class="nav-tab" data-tab="architecture" id="tabArchitecture">Architecture</button>
       </nav>
 
-      <!-- Active User & Theme Switcher & Status -->
+      <!-- Right Controls: Eye-Comfort Theme Toggle + Account Pill -->
       <div class="nav-user-control">
-        <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Dark/Light Mode">
-          <span class="theme-icon" id="themeIcon">🌙</span>
+        <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Bright / Dark Theme" aria-label="Toggle Bright / Dark Theme">
+          <span class="theme-icon" id="themeIcon">☀️</span>
         </button>
 
-        <div class="user-selector-wrapper">
-          <label for="userSelect" class="selector-label">User:</label>
-          <select id="userSelect" class="select-dropdown">
-            <option value="1">User 1 (Sci-Fi Enthusiast)</option>
-          </select>
-        </div>
-
-        <div class="health-badge" id="systemHealthBadge" title="FastAPI Engine Active">
-          <span class="status-dot"></span>
-          <span class="status-text">Production Ready</span>
+        <!-- User Account Pill & Dropdown -->
+        <div class="user-account-wrapper" id="userAccountWrapper">
+          <button class="user-chip-btn" id="userChipBtn" aria-label="Account Profile Menu">
+            <span class="user-chip-avatar" id="navUserAvatar">A</span>
+            <span class="user-chip-name" id="navUserName">Alex Vance</span>
+            <svg class="chevron-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          
+          <!-- Apple-Style Account Dropdown Popover -->
+          <div class="account-dropdown-menu hidden" id="accountDropdownMenu">
+            <div class="account-menu-header">
+              <div class="menu-avatar" id="menuUserAvatar">A</div>
+              <div class="menu-user-details">
+                <strong id="menuUserName">Alex Vance</strong>
+                <small id="menuUserTaste">Sci-Fi & Action Aficionado</small>
+              </div>
+            </div>
+            <div class="account-menu-divider"></div>
+            <button class="account-menu-item" id="btnMenuProfile">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span>View Taste Signature</span>
+            </button>
+            <button class="account-menu-item" id="btnMenuSwitchAccount">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+              <span>Switch Profile / Sign In</span>
+            </button>
+            <div class="account-menu-divider"></div>
+            <button class="account-menu-item text-danger" id="btnMenuSignOut">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
       </div>
     </header>
 
-    <!-- Sub-Header Status Bar -->
-    <div class="system-status-bar">
-      <div class="status-item">
-        <span class="status-key">Dataset:</span>
-        <span class="status-val" id="statDataset">MovieLens 100K</span>
-      </div>
-      <div class="status-item">
-        <span class="status-key">Verified Ratings:</span>
-        <span class="status-val" id="statRatings">100,836</span>
-      </div>
-      <div class="status-item">
-        <span class="status-key">Unique Users:</span>
-        <span class="status-val" id="statUsers">610</span>
-      </div>
-      <div class="status-item">
-        <span class="status-key">Active Movies:</span>
-        <span class="status-val" id="statMovies">9,742</span>
-      </div>
-      <div class="status-item">
-        <span class="status-key">Split:</span>
-        <span class="status-val">Temporal Held-Out (80/10/10)</span>
-      </div>
-      <div class="status-item ml-auto">
-        <span class="status-key">Live Latency:</span>
-        <span class="status-val latency-val" id="statLatency">— ms</span>
-      </div>
-    </div>
+    <!-- Hidden compatibility select for existing test runners -->
+    <select id="userSelect" style="display: none;">
+      <option value="1">User 1</option>
+    </select>
 
-    <!-- MAIN VIEWS CONTAINER -->
+    <!-- MAIN PRODUCT VIEWS CONTAINER -->
     <main class="content-area">
       
       <!-- ========================================== -->
-      <!-- VIEW 1: HOME (PLATFORM OVERVIEW & HERO)    -->
+      <!-- VIEW 1: DISCOVER (APPLE KEYNOTE HERO)     -->
       <!-- ========================================== -->
       <section class="view-panel active" id="viewHome">
-        <div class="hero-card glass-panel">
-          <div class="hero-badge">AI Recommendation Product &bull; Project 02</div>
+        <div class="hero-card apple-hero">
+          <div class="hero-eyebrow">Cinema Intelligence Studio</div>
           <h1 class="hero-title">
-            Personalized Recommendation <br />
-            <span class="gradient-text">Intelligence Platform</span>
+            Curated with intelligence.<br />
+            <span class="gradient-text">Personalized to perfection.</span>
           </h1>
           <p class="hero-subtitle">
-            A production-grade recommendation engine built on real MovieLens data. Powered by multi-channel candidate generation, 35-dimensional SVD latent factor embeddings, Bayesian dampening priors, and MMR diversity ranking.
+            A breakthrough recommendation platform powered by multi-channel collaborative networks, 35-dimensional latent embeddings, and real-time taste calibration.
           </p>
 
-          <!-- Hero Action Buttons -->
           <div class="hero-actions">
-            <button class="action-btn btn-primary" id="btnHeroGoRecs">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-              Explore For You Recommendations
+            <button class="action-btn btn-primary btn-apple" id="btnHeroGoRecs">
+              Explore Your Mix &rarr;
             </button>
-            <button class="action-btn btn-secondary" id="btnHeroGoEvaluation">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34"></path><path d="M18 14.66V17c0 .55-.45 1-1 1h-2c-.55 0-1-.45-1-1v-2.34"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>
-              Inspect Real Offline Benchmarks
+            <button class="action-btn btn-secondary btn-apple-glass" id="btnHeroGoEvaluation">
+              Live Benchmarks
             </button>
-            <button class="action-btn btn-outline" id="btnHeroGoArchitecture">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect></svg>
-              View System Pipeline
+            <button class="action-btn btn-secondary btn-apple-glass" id="btnHeroGoArchitecture">
+              Architecture
             </button>
           </div>
 
-          <!-- Hero Quick Stats Grid -->
-          <div class="hero-stats-grid">
+          <!-- Apple Spec Metric Grid -->
+          <div class="hero-stats-grid apple-specs">
             <div class="hero-stat-box">
-              <span class="hero-stat-val">+50.0%</span>
-              <span class="hero-stat-lbl">Precision@10 Lift vs Baseline</span>
+              <span class="hero-stat-val">+50%</span>
+              <span class="hero-stat-lbl">Precision@10 Lift vs Prior</span>
             </div>
             <div class="hero-stat-box">
               <span class="hero-stat-val">23.2x</span>
@@ -157,27 +134,27 @@
             </div>
             <div class="hero-stat-box">
               <span class="hero-stat-val">&lt; 10ms</span>
-              <span class="hero-stat-lbl">Average Inference Latency</span>
+              <span class="hero-stat-lbl">Real-time Inference Speed</span>
             </div>
             <div class="hero-stat-box">
-              <span class="hero-stat-val">100%</span>
-              <span class="hero-stat-lbl">Leak-Free Temporal Split</span>
+              <span class="hero-stat-val">100k+</span>
+              <span class="hero-stat-lbl">Verified MovieLens Ratings</span>
             </div>
           </div>
         </div>
 
-        <!-- Algorithm Spotlight Grid -->
+        <!-- Strategy Spotlight Cards -->
         <div class="section-header-block">
-          <h2>Production Recommendation Strategies</h2>
-          <p>Four distinct algorithms deployed and continuously benchmarked on the platform.</p>
+          <h2>Engine Architectures</h2>
+          <p>Four distinct recommendation strategies benchmarked live on the platform.</p>
         </div>
 
         <div class="strategies-grid">
           <div class="strategy-card glass-panel" data-model-jump="hybrid">
             <div class="strat-icon">✨</div>
-            <h3>Two-Stage Hybrid Engine (👑 Winner)</h3>
+            <h3>Two-Stage Hybrid Engine</h3>
             <p class="strat-desc">
-              Retrieves candidates across Collaborative Neighborhoods, SVD Latent Projections, and Genre Seeds, followed by feature-weighted composite ranking and MMR diversity control.
+              Retrieves candidates across Collaborative Networks, SVD Latent Projections, and Genre Seeds, followed by feature-weighted composite ranking with diversity control.
             </p>
             <div class="strat-meta">
               <span class="tag-badge highlight">Highest NDCG & Precision</span>
@@ -188,9 +165,9 @@
 
           <div class="strategy-card glass-panel" data-model-jump="item_collaborative">
             <div class="strat-icon">🤝</div>
-            <h3>Item-Item Collaborative Filtering</h3>
+            <h3>Item-Item Collaborative</h3>
             <p class="strat-desc">
-              Constructs item-item cosine similarity vectors with shrinkage penalties. Recommends items based on specific co-ratings from the user's historical favorites.
+              Computes cosine similarity vectors with shrinkage penalties. Recommends items based on specific co-ratings from your historical favorites.
             </p>
             <div class="strat-meta">
               <span class="tag-badge">Niche Affinity</span>
@@ -201,9 +178,9 @@
 
           <div class="strategy-card glass-panel" data-model-jump="matrix_factorization_svd">
             <div class="strat-icon">🧠</div>
-            <h3>Latent Factor SVD Factorization</h3>
+            <h3>Latent Factor SVD</h3>
             <p class="strat-desc">
-              Learns low-rank 35-dimensional latent embeddings for users and movies via Singular Value Decomposition on regularized rating residuals.
+              Learns low-rank 35-dimensional latent embeddings for users and titles via Singular Value Decomposition on regularized rating residuals.
             </p>
             <div class="strat-meta">
               <span class="tag-badge">Dense Embeddings</span>
@@ -214,9 +191,9 @@
 
           <div class="strategy-card glass-panel" data-model-jump="popularity">
             <div class="strat-icon">📈</div>
-            <h3>Popularity Baseline Prior</h3>
+            <h3>Bayesian Popularity Prior</h3>
             <p class="strat-desc">
-              Calculates Bayesian dampening weighted ratings ($m=10$ m-estimate) to reliably bootstrap recommendations for brand-new cold-start profiles.
+              Calculates Bayesian dampening weighted ratings (m=10 m-estimate) to reliably bootstrap recommendations for brand-new cold-start profiles.
             </p>
             <div class="strat-meta">
               <span class="tag-badge">Zero Cold-Start Penalty</span>
@@ -228,57 +205,62 @@
       </section>
 
       <!-- ========================================== -->
-      <!-- VIEW 2: PERSONALIZED RECOMMENDATIONS       -->
+      <!-- VIEW 2: FOR YOU (PERSONALIZED FEED)        -->
       <!-- ========================================== -->
       <section class="view-panel" id="viewRecommendations">
         <div class="recommendations-header-card glass-panel">
           <div class="header-main-info">
             <div class="user-profile-summary">
-              <div class="user-avatar" id="recUserAvatar">U1</div>
+              <div class="user-avatar" id="recUserAvatar">A</div>
               <div>
-                <h2 class="user-title" id="recUserTitle">Personalized Recommendations for User 1</h2>
-                <p class="user-taste-summary" id="recUserTasteSummary">Taste Profile: Analyzing preferences...</p>
+                <h2 class="user-title" id="recUserTitle">Curated for Alex Vance</h2>
+                <p class="user-taste-summary" id="recUserTasteSummary">Taste Signature: Sci-Fi & Action Aficionado (232 ratings)</p>
               </div>
             </div>
 
-            <!-- Model Switcher Pills -->
+            <!-- Algorithm Switcher Pills -->
             <div class="model-picker-container">
-              <span class="picker-label">Active Algorithm:</span>
+              <span class="picker-label">Active Strategy:</span>
               <div class="pill-group" id="modelPillGroup">
                 <button class="pill-btn active" data-model="hybrid" id="btnModelHybrid">
-                  <span class="pill-icon">✨</span> Two-Stage Hybrid
+                  <span class="pill-icon">✨</span> Hybrid Engine
                 </button>
                 <button class="pill-btn" data-model="item_collaborative" id="btnModelCF">
                   <span class="pill-icon">🤝</span> Item-Item CF
                 </button>
                 <button class="pill-btn" data-model="matrix_factorization_svd" id="btnModelSVD">
-                  <span class="pill-icon">🧠</span> SVD Latent Factors
+                  <span class="pill-icon">🧠</span> Latent SVD
                 </button>
                 <button class="pill-btn" data-model="popularity" id="btnModelPop">
-                  <span class="pill-icon">📈</span> Popularity Baseline
+                  <span class="pill-icon">📈</span> Bayesian Prior
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Secondary Controls Row -->
+          <!-- Secondary Filter Bar -->
           <div class="rec-controls-bar">
             <div class="control-item">
-              <label for="genreFilter">Genre Filter:</label>
+              <label for="genreFilter">Filter Genre:</label>
               <select id="genreFilter" class="select-dropdown">
                 <option value="">All Genres</option>
               </select>
             </div>
 
             <div class="control-item">
-              <label for="topKSlider">Top-K Items: <strong id="topKValue">10</strong></label>
+              <label for="topKSlider">Results: <strong id="topKValue">10</strong></label>
               <input type="range" id="topKSlider" min="5" max="30" step="5" value="10" class="slider-input" />
+            </div>
+
+            <div class="control-item latency-indicator">
+              <span class="latency-dot"></span>
+              <span id="statLatency">— ms</span>
             </div>
 
             <div class="control-item ml-auto">
               <button class="action-btn btn-primary" id="btnRefreshRecs">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                Regenerate Recommendations
+                Recalibrate Recommendations
               </button>
             </div>
           </div>
@@ -296,7 +278,7 @@
         <div class="cold-start-banner hidden" id="coldStartBanner">
           <div class="alert-icon">⚡</div>
           <div>
-            <strong>Cold-Start State Detected:</strong> This user has zero prior interaction history. The system employs Bayesian dampening priors and high-affinity discovery fallbacks to bootstrap recommendations seamlessly. Rate any movie below to instantly calibrate their profile!
+            <strong>Cold-Start Profile Active:</strong> Zero prior interaction history detected. Cinema utilizes Bayesian dampening priors and high-affinity discovery fallbacks. Rate any title below to immediately calibrate your taste signature!
           </div>
         </div>
 
@@ -304,13 +286,13 @@
         <div class="recommendations-grid" id="recommendationsGrid">
           <div class="loading-state">
             <div class="spinner"></div>
-            <p>Generating personalized recommendations...</p>
+            <p>Curating personalized recommendations...</p>
           </div>
         </div>
       </section>
 
       <!-- ========================================== -->
-      <!-- VIEW 3: EXPLORE MOVIES                     -->
+      <!-- VIEW 3: EXPLORE (CATALOG GALLERY)          -->
       <!-- ========================================== -->
       <section class="view-panel" id="viewCatalog">
         <div class="catalog-header glass-panel">
@@ -362,22 +344,22 @@
         <div class="profile-layout">
           <!-- Left Column: User Summary Card -->
           <div class="profile-card glass-panel">
-            <div class="profile-avatar-large" id="profileLargeAvatar">U1</div>
-            <h2 class="profile-name" id="profileName">User 1</h2>
+            <div class="profile-avatar-large" id="profileLargeAvatar">A</div>
+            <h2 class="profile-name" id="profileName">Alex Vance</h2>
             <p class="profile-tagline" id="profileTagline">Profile History & Taste Signature</p>
 
             <div class="profile-metrics-list">
               <div class="metric-row">
                 <span class="m-label">Total Rated Movies:</span>
-                <span class="m-value" id="profileRatedCount">—</span>
+                <span class="m-value" id="profileRatedCount">232</span>
               </div>
               <div class="metric-row">
                 <span class="m-label">Mean Rating Given:</span>
-                <span class="m-value" id="profileMeanRating">— ★</span>
+                <span class="m-value" id="profileMeanRating">4.3 ★</span>
               </div>
               <div class="metric-row">
                 <span class="m-label">Primary Taste:</span>
-                <span class="m-value" id="profilePrimaryTaste">—</span>
+                <span class="m-value" id="profilePrimaryTaste">Sci-Fi</span>
               </div>
             </div>
 
@@ -387,6 +369,10 @@
                 <!-- Populated dynamically -->
               </div>
             </div>
+
+            <button class="action-btn btn-secondary btn-apple-glass" id="btnProfileSwitchUser" style="width:100%;margin-top:16px;">
+              Switch Active Profile
+            </button>
           </div>
 
           <!-- Right Column: Rating History & Feedback Log -->
@@ -404,7 +390,7 @@
       </section>
 
       <!-- ========================================== -->
-      <!-- VIEW 5: RECOMMENDATION ANALYTICS           -->
+      <!-- VIEW 5: INTELLIGENCE ENGINE (ANALYTICS)    -->
       <!-- ========================================== -->
       <section class="view-panel" id="viewAnalytics">
         <div class="analytics-grid">
@@ -501,7 +487,7 @@
       </section>
 
       <!-- ========================================== -->
-      <!-- VIEW 6: MODEL EVALUATION DASHBOARD         -->
+      <!-- VIEW 6: BENCHMARKS (MODEL EVALUATION)      -->
       <!-- ========================================== -->
       <section class="view-panel" id="viewEvaluation">
         <div class="evaluation-container">
@@ -509,7 +495,7 @@
             <div class="eval-hero-header">
               <div>
                 <h2>Verified Offline Benchmark Evaluation</h2>
-                <p>Strictly evaluated on held-out temporal interactions (ratings &ge; 3.5 ground-truth). No data or user leakage.</p>
+                <p>Strictly evaluated on held-out temporal interactions (ratings &ge; 3.5 ground-truth). Zero data leakage.</p>
               </div>
               <div class="eval-winner-badge">
                 <span class="trophy">🏆</span>
@@ -548,7 +534,7 @@
           <!-- Comprehensive Benchmark Table -->
           <div class="eval-table-card glass-panel">
             <div class="table-header-row">
-              <h3>Offline Metrics Comparison Across Models</h3>
+              <h3>Offline Metrics Comparison Across Architectures</h3>
               <span class="eval-protocol-tag" id="evalProtocolText">Temporal Held-Out Protocol</span>
             </div>
             
@@ -724,6 +710,70 @@
       </section>
 
     </main>
+
+    <!-- ========================================== -->
+    <!-- DEDICATED APPLE-STYLE SIGN IN / LOGIN MODAL-->
+    <!-- ========================================== -->
+    <div class="modal-overlay hidden" id="loginModal">
+      <div class="login-modal-card glass-panel">
+        <button class="modal-close-btn" id="btnLoginClose" aria-label="Close Sign In Modal">&times;</button>
+        
+        <div class="login-header">
+          <div class="login-cinema-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+              <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
+            </svg>
+          </div>
+          <h2>Sign in to Cinema</h2>
+          <p class="login-subtitle">Choose a taste profile or create a personalized identity to experience real-time AI recommendations.</p>
+        </div>
+
+        <!-- Auth Tabs: Choose Saved Profile vs New Account -->
+        <div class="login-tabs">
+          <button class="login-tab active" id="tabSelectProfile">Choose Profile</button>
+          <button class="login-tab" id="tabNewProfile">New Account</button>
+        </div>
+
+        <!-- Tab 1: Saved Profiles Grid -->
+        <div class="login-tab-content active" id="panelSelectProfile">
+          <div class="profiles-grid" id="loginProfilesGrid">
+            <!-- Populated dynamically from localStorage saved profiles -->
+          </div>
+        </div>
+
+        <!-- Tab 2: Create Custom User Form -->
+        <div class="login-tab-content" id="panelNewProfile">
+          <form id="newProfileForm" class="new-profile-form">
+            <div class="form-group">
+              <label for="inputUserName">Full Name</label>
+              <input type="text" id="inputUserName" class="apple-input" placeholder="e.g. Julian Davies" required />
+            </div>
+
+            <div class="form-group">
+              <label for="inputUserId">User ID (1–610 or 9999 for New)</label>
+              <input type="number" id="inputUserId" class="apple-input" min="1" max="9999" value="1" placeholder="1" required />
+              <small class="form-hint">IDs 1–610 load historical MovieLens data. 9999 creates a fresh Cold-Start account.</small>
+            </div>
+
+            <div class="form-group">
+              <label>Favorite Starter Genre</label>
+              <div class="genre-chips-selector" id="genreChipsSelector">
+                <!-- Populated dynamically with chips -->
+              </div>
+            </div>
+
+            <button type="submit" class="action-btn btn-primary btn-apple-submit">
+              Sign In & Save Profile
+            </button>
+          </form>
+        </div>
+
+        <div class="login-footer">
+          <span class="security-note">🔒 Private & Secure &bull; Preferences saved locally to your device</span>
+        </div>
+      </div>
+    </div>
 
     <!-- MOVIE DETAIL MODAL -->
     <div class="modal-overlay hidden" id="movieDetailModal">
