@@ -1,10 +1,20 @@
 /**
  * RecSys AI — Personalized Recommendation Intelligence Platform
  * Frontend Application Controller
+ * 
+ * Features:
+ * - 7 Complete Sections: Home, Recommendations, Explore Movies, User Profile,
+ *   Recommendation Analytics, Model Evaluation, System Architecture.
+ * - Antigravity Dark/Light Mode Switcher with LocalStorage persistence.
+ * - Real API integration with MovieLens data, SVD embeddings, and Hybrid Ranker.
+ * - Interactive Closed Feedback Loop (Ratings, Likes, Bookmarks).
+ * - Real-time latency tracking and dynamic evaluation table rendering.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // App State
+  // ==========================================
+  // Application State
+  // ==========================================
   const state = {
     userId: 1,
     modelType: 'hybrid',
@@ -19,32 +29,45 @@ document.addEventListener('DOMContentLoaded', () => {
     genres: [],
     liveFeedback: [],
     evaluationMetrics: null,
+    theme: localStorage.getItem('recsys_theme') || 'dark',
   };
 
-  // Model Descriptions for Banner
+  // Model Descriptions for Dynamic UI Headers
   const modelInfo = {
     hybrid: {
-      badge: 'Two-Stage Hybrid Intelligence',
-      desc: 'Retrieves candidates from Collaborative Filtering, Latent SVD embeddings, and Genre affinities, then applies feature-weighted ranking with diversity control.',
+      badge: 'Two-Stage Hybrid Intelligence (Production)',
+      desc: 'Retrieves candidate pools across Collaborative Neighborhoods, SVD Latent Projections, and Genre Seeds, then applies feature-weighted composite ranking with MMR diversity control.',
     },
     item_collaborative: {
       badge: 'Item-Item Collaborative Filtering',
-      desc: 'Computes cosine similarities between item interaction vectors with shrinkage penalty. Provides transparent seed attribution explanations.',
+      desc: 'Computes item-item cosine similarities with shrinkage penalty. Surfaces items directly co-rated by users who shared preferences on seed titles.',
     },
     matrix_factorization_svd: {
       badge: 'Latent Factor Matrix Factorization',
-      desc: 'Decomposes user-item interaction matrix into dense 35-dimensional latent embeddings via Singular Value Decomposition (SVD).',
+      desc: 'Projects user preferences and item characteristics into a dense 35-dimensional latent embedding space using Singular Value Decomposition.',
     },
     popularity: {
       badge: 'Popularity Baseline Prior',
-      desc: 'Ranks catalog items using Bayesian dampening weighted ratings. Optimal zero-information cold-start fallback.',
+      desc: 'Ranks the catalog via Bayesian dampening weighted ratings (m=10 m-estimate). Guarantees reliable, high-confidence cold-start fallback recommendations.',
     },
   };
 
+  // ==========================================
   // DOM Elements
+  // ==========================================
   const navTabs = document.querySelectorAll('.nav-tab');
   const viewPanels = document.querySelectorAll('.view-panel');
   const userSelect = document.getElementById('userSelect');
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const themeIcon = document.getElementById('themeIcon');
+  const brandLogo = document.getElementById('brandLogo');
+
+  // Hero Controls (Home)
+  const btnHeroGoRecs = document.getElementById('btnHeroGoRecs');
+  const btnHeroGoEvaluation = document.getElementById('btnHeroGoEvaluation');
+  const btnHeroGoArchitecture = document.getElementById('btnHeroGoArchitecture');
+
+  // Recommendations Controls
   const modelPillGroup = document.getElementById('modelPillGroup');
   const topKSlider = document.getElementById('topKSlider');
   const topKValue = document.getElementById('topKValue');
@@ -59,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const recUserTitle = document.getElementById('recUserTitle');
   const recUserTasteSummary = document.getElementById('recUserTasteSummary');
 
-  // Catalog DOM
+  // Catalog Controls
   const catalogSearchInput = document.getElementById('catalogSearchInput');
   const catalogGenreFilter = document.getElementById('catalogGenreFilter');
   const catalogSortBy = document.getElementById('catalogSortBy');
@@ -89,9 +112,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const toastContainer = document.getElementById('toastContainer');
 
   // ==========================================
-  // Initialization
+  // Initialization Lifecycle
   // ==========================================
   async function init() {
+    initTheme();
     setupTabNavigation();
     setupEventListeners();
     await fetchHealthAndStats();
@@ -103,30 +127,144 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Tab Navigation
+  // Theme Management (Dark / Light Mode)
   // ==========================================
+  function initTheme() {
+    document.documentElement.setAttribute('data-theme', state.theme);
+    updateThemeIcon();
+  }
+
+  function toggleTheme() {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', state.theme);
+    localStorage.setItem('recsys_theme', state.theme);
+    updateThemeIcon();
+    showToast(`Switched to ${state.theme === 'dark' ? 'Dark' : 'Light'} Mode`);
+  }
+
+  function updateThemeIcon() {
+    if (themeIcon) {
+      themeIcon.textContent = state.theme === 'dark' ? '🌙' : '☀️';
+    }
+    if (themeToggleBtn) {
+      themeToggleBtn.setAttribute(
+        'title',
+        state.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'
+      );
+    }
+  }
+
+  // ==========================================
+  // Tab Navigation Controller
+  // ==========================================
+  function switchTab(targetTabId) {
+    const cleanId = targetTabId.toLowerCase().trim();
+
+    navTabs.forEach((tab) => {
+      const tabData = tab.getAttribute('data-tab');
+      if (tabData === cleanId) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    viewPanels.forEach((panel) => {
+      panel.classList.remove('active');
+      const expectedId = `view${capitalize(cleanId)}`;
+      if (panel.id === expectedId) {
+        panel.classList.add('active');
+      }
+    });
+
+    // Lazy triggers when entering tabs
+    if (cleanId === 'profile') {
+      loadUserProfile();
+    } else if (cleanId === 'evaluation') {
+      renderEvaluationTable();
+    } else if (cleanId === 'recommendations') {
+      // Ensure recommendation grid is populated
+      if (recommendationsGrid.children.length === 0 || recommendationsGrid.querySelector('.loading-state')) {
+        loadRecommendations();
+      }
+    }
+
+    // Smooth scroll to top of main view container
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function setupTabNavigation() {
     navTabs.forEach((tab) => {
       tab.addEventListener('click', () => {
         const targetTab = tab.getAttribute('data-tab');
-        navTabs.forEach((t) => t.classList.remove('active'));
-        tab.classList.add('active');
+        switchTab(targetTab);
+      });
+    });
 
-        viewPanels.forEach((panel) => {
-          panel.classList.remove('active');
-          if (panel.id === `view${capitalize(targetTab)}`) {
-            panel.classList.add('active');
-          }
-        });
+    // Brand logo navigates to Home
+    if (brandLogo) {
+      brandLogo.addEventListener('click', () => switchTab('home'));
+    }
 
-        // Tab-specific trigger
-        if (targetTab === 'profile') {
-          loadUserProfile();
-        } else if (targetTab === 'evaluation') {
-          renderEvaluationTable();
+    // Hero Action Buttons
+    if (btnHeroGoRecs) {
+      btnHeroGoRecs.addEventListener('click', () => switchTab('recommendations'));
+    }
+    if (btnHeroGoEvaluation) {
+      btnHeroGoEvaluation.addEventListener('click', () => switchTab('evaluation'));
+    }
+    if (btnHeroGoArchitecture) {
+      btnHeroGoArchitecture.addEventListener('click', () => switchTab('architecture'));
+    }
+
+    // Strategy Spotlight jump buttons and cards
+    document.querySelectorAll('.strat-jump-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const model = btn.getAttribute('data-model');
+        activateModel(model);
+        switchTab('recommendations');
+      });
+    });
+
+    document.querySelectorAll('.strategy-card').forEach((card) => {
+      card.addEventListener('click', () => {
+        const model = card.getAttribute('data-model-jump');
+        if (model) {
+          activateModel(model);
+          switchTab('recommendations');
         }
       });
     });
+
+    // Pipeline interactive stage cards
+    document.querySelectorAll('.stage-card').forEach((stage) => {
+      stage.addEventListener('click', () => {
+        document.querySelectorAll('.stage-card').forEach((s) => s.classList.remove('active'));
+        stage.classList.add('active');
+        const stageNum = stage.getAttribute('data-stage');
+        showToast(`Inspecting Pipeline Stage 0${stageNum}: ${stage.querySelector('h4').textContent}`);
+      });
+    });
+  }
+
+  function activateModel(modelName) {
+    if (!modelInfo[modelName]) return;
+    state.modelType = modelName;
+
+    // Update pill group
+    if (modelPillGroup) {
+      modelPillGroup.querySelectorAll('.pill-btn').forEach((btn) => {
+        if (btn.getAttribute('data-model') === modelName) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    updateStrategyBanner();
+    loadRecommendations();
   }
 
   function capitalize(str) {
@@ -134,110 +272,148 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Event Listeners
+  // Event Listeners Setup
   // ==========================================
   function setupEventListeners() {
+    // Theme Switcher Button
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', toggleTheme);
+    }
+
     // User Switcher
-    userSelect.addEventListener('change', (e) => {
-      state.userId = parseInt(e.target.value, 10);
-      updateUserHeader();
-      loadRecommendations();
-      if (document.getElementById('viewProfile').classList.contains('active')) {
-        loadUserProfile();
-      }
-    });
+    if (userSelect) {
+      userSelect.addEventListener('change', (e) => {
+        state.userId = parseInt(e.target.value, 10);
+        updateUserHeader();
+        loadRecommendations();
+        if (document.getElementById('viewProfile').classList.contains('active')) {
+          loadUserProfile();
+        }
+      });
+    }
 
     // Model Selector Pills
-    modelPillGroup.querySelectorAll('.pill-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        modelPillGroup.querySelectorAll('.pill-btn').forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.modelType = btn.getAttribute('data-model');
-        updateStrategyBanner();
-        loadRecommendations();
+    if (modelPillGroup) {
+      modelPillGroup.querySelectorAll('.pill-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          modelPillGroup.querySelectorAll('.pill-btn').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          state.modelType = btn.getAttribute('data-model');
+          updateStrategyBanner();
+          loadRecommendations();
+        });
       });
-    });
+    }
 
     // Top K Slider
-    topKSlider.addEventListener('input', (e) => {
-      state.k = parseInt(e.target.value, 10);
-      topKValue.textContent = state.k;
-    });
+    if (topKSlider) {
+      topKSlider.addEventListener('input', (e) => {
+        state.k = parseInt(e.target.value, 10);
+        if (topKValue) topKValue.textContent = state.k;
+      });
 
-    topKSlider.addEventListener('change', () => {
-      loadRecommendations();
-    });
+      topKSlider.addEventListener('change', () => {
+        loadRecommendations();
+      });
+    }
 
     // Genre Filter in Recommendations
-    genreFilter.addEventListener('change', (e) => {
-      state.genreFilter = e.target.value;
-      loadRecommendations();
-    });
+    if (genreFilter) {
+      genreFilter.addEventListener('change', (e) => {
+        state.genreFilter = e.target.value;
+        loadRecommendations();
+      });
+    }
 
-    // Refresh Button
-    btnRefreshRecs.addEventListener('click', () => {
-      loadRecommendations();
-    });
+    // Refresh Recommendations Button
+    if (btnRefreshRecs) {
+      btnRefreshRecs.addEventListener('click', () => {
+        loadRecommendations();
+      });
+    }
 
     // Catalog Controls
     let searchDebounceTimer = null;
-    catalogSearchInput.addEventListener('input', (e) => {
-      clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = setTimeout(() => {
-        state.catalogQuery = e.target.value;
+    if (catalogSearchInput) {
+      catalogSearchInput.addEventListener('input', (e) => {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+          state.catalogQuery = e.target.value;
+          state.catalogPage = 1;
+          loadCatalog();
+        }, 300);
+      });
+    }
+
+    if (catalogGenreFilter) {
+      catalogGenreFilter.addEventListener('change', (e) => {
+        state.catalogGenre = e.target.value;
         state.catalogPage = 1;
         loadCatalog();
-      }, 350);
-    });
+      });
+    }
 
-    catalogGenreFilter.addEventListener('change', (e) => {
-      state.catalogGenre = e.target.value;
-      state.catalogPage = 1;
-      loadCatalog();
-    });
-
-    catalogSortBy.addEventListener('change', (e) => {
-      state.catalogSort = e.target.value;
-      state.catalogPage = 1;
-      loadCatalog();
-    });
-
-    btnPrevPage.addEventListener('click', () => {
-      if (state.catalogPage > 1) {
-        state.catalogPage--;
+    if (catalogSortBy) {
+      catalogSortBy.addEventListener('change', (e) => {
+        state.catalogSort = e.target.value;
+        state.catalogPage = 1;
         loadCatalog();
-      }
-    });
+      });
+    }
 
-    btnNextPage.addEventListener('click', () => {
-      if (state.catalogPage < state.catalogTotalPages) {
-        state.catalogPage++;
-        loadCatalog();
-      }
-    });
+    if (btnPrevPage) {
+      btnPrevPage.addEventListener('click', () => {
+        if (state.catalogPage > 1) {
+          state.catalogPage--;
+          loadCatalog();
+        }
+      });
+    }
+
+    if (btnNextPage) {
+      btnNextPage.addEventListener('click', () => {
+        if (state.catalogPage < state.catalogTotalPages) {
+          state.catalogPage++;
+          loadCatalog();
+        }
+      });
+    }
 
     // Profile History Sub-tabs
-    tabHistoricalRatings.addEventListener('click', () => {
-      tabHistoricalRatings.classList.add('active');
-      tabLiveFeedback.classList.remove('active');
-      renderHistoricalRatings();
-    });
+    if (tabHistoricalRatings) {
+      tabHistoricalRatings.addEventListener('click', () => {
+        tabHistoricalRatings.classList.add('active');
+        tabLiveFeedback.classList.remove('active');
+        renderHistoricalRatings();
+      });
+    }
 
-    tabLiveFeedback.addEventListener('click', () => {
-      tabLiveFeedback.classList.add('active');
-      tabHistoricalRatings.classList.remove('active');
-      renderLiveFeedback();
-    });
+    if (tabLiveFeedback) {
+      tabLiveFeedback.addEventListener('click', () => {
+        tabLiveFeedback.classList.add('active');
+        tabHistoricalRatings.classList.remove('active');
+        renderLiveFeedback();
+      });
+    }
 
-    // Modal close
-    btnModalClose.addEventListener('click', closeModal);
-    movieDetailModal.addEventListener('click', (e) => {
-      if (e.target === movieDetailModal) closeModal();
+    // Modal Close Triggers
+    if (btnModalClose) {
+      btnModalClose.addEventListener('click', closeModal);
+    }
+    if (movieDetailModal) {
+      movieDetailModal.addEventListener('click', (e) => {
+        if (e.target === movieDetailModal) closeModal();
+      });
+    }
+
+    // Global ESC key listener to close modals
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
     });
   }
 
   // ==========================================
-  // Fetch System Health & Stats
+  // Fetch System Health & Statistics
   // ==========================================
   async function fetchHealthAndStats() {
     try {
@@ -245,9 +421,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) return;
       const data = await res.json();
       if (data.dataset) {
-        document.getElementById('statRatings').textContent = (data.dataset.total_ratings || 100836).toLocaleString();
-        document.getElementById('statUsers').textContent = (data.dataset.total_users || 610).toLocaleString();
-        document.getElementById('statMovies').textContent = (data.dataset.total_movies || 9742).toLocaleString();
+        const elRatings = document.getElementById('statRatings');
+        const elUsers = document.getElementById('statUsers');
+        const elMovies = document.getElementById('statMovies');
+        if (elRatings) elRatings.textContent = (data.dataset.total_ratings || 100836).toLocaleString();
+        if (elUsers) elUsers.textContent = (data.dataset.total_users || 610).toLocaleString();
+        if (elMovies) elMovies.textContent = (data.dataset.total_movies || 9742).toLocaleString();
       }
     } catch (err) {
       console.warn('Could not fetch /api/health:', err);
@@ -264,13 +443,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       state.sampleUsers = data.sample_users || [];
 
-      userSelect.innerHTML = '';
-      state.sampleUsers.forEach((u) => {
-        const opt = document.createElement('option');
-        opt.value = u.user_id;
-        opt.textContent = u.label;
-        userSelect.appendChild(opt);
-      });
+      if (userSelect) {
+        userSelect.innerHTML = '';
+        state.sampleUsers.forEach((u) => {
+          const opt = document.createElement('option');
+          opt.value = u.user_id;
+          opt.textContent = u.label;
+          userSelect.appendChild(opt);
+        });
+      }
 
       if (state.sampleUsers.length > 0) {
         state.userId = state.sampleUsers[0].user_id;
@@ -283,6 +464,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateUserHeader() {
     const user = state.sampleUsers.find((u) => u.user_id === state.userId);
+    if (!recUserAvatar || !recUserTitle || !recUserTasteSummary) return;
+
     if (user) {
       recUserAvatar.textContent = `U${user.user_id === 9999 ? '★' : user.user_id}`;
       recUserTitle.textContent = `Personalized Recommendations for User ${user.user_id}`;
@@ -308,8 +491,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       state.genres = data.genres || [];
 
-      // Populate both dropdowns
       [genreFilter, catalogGenreFilter].forEach((select) => {
+        if (!select) return;
         select.innerHTML = '<option value="">All Genres</option>';
         state.genres.forEach((g) => {
           const opt = document.createElement('option');
@@ -339,18 +522,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateStrategyBanner() {
     const info = modelInfo[state.modelType] || modelInfo.hybrid;
-    strategyBadge.textContent = info.badge;
-    strategyDesc.textContent = info.desc;
+    if (strategyBadge) strategyBadge.textContent = info.badge;
+    if (strategyDesc) strategyDesc.textContent = info.desc;
   }
 
   // ==========================================
-  // Recommendations Loader
+  // Load Personalized Recommendations
   // ==========================================
   async function loadRecommendations() {
+    if (!recommendationsGrid) return;
+
     recommendationsGrid.innerHTML = `
       <div class="loading-state">
         <div class="spinner"></div>
-        <p>Retrieving candidate pool & calculating ranking scores...</p>
+        <p>Retrieving candidate pool & ranking top items for User ${state.userId}...</p>
       </div>
     `;
 
@@ -362,17 +547,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const res = await fetch(url);
       if (!res.ok) {
-        throw new Error(`Server returned ${res.status}`);
+        throw new Error(`Server returned HTTP ${res.status}`);
       }
 
       const data = await res.json();
-      statLatency.textContent = `${data.latency_ms} ms`;
+      if (statLatency) {
+        statLatency.textContent = `${data.latency_ms} ms`;
+      }
 
-      // Cold start banner
-      if (data.is_cold_start) {
-        coldStartBanner.classList.remove('hidden');
-      } else {
-        coldStartBanner.classList.add('hidden');
+      // Cold start banner visibility
+      if (coldStartBanner) {
+        if (data.is_cold_start) {
+          coldStartBanner.classList.remove('hidden');
+        } else {
+          coldStartBanner.classList.add('hidden');
+        }
       }
 
       renderRecommendations(data.recommendations || []);
@@ -381,17 +570,21 @@ document.addEventListener('DOMContentLoaded', () => {
       recommendationsGrid.innerHTML = `
         <div class="loading-state" style="color: var(--accent-rose)">
           <p>⚠️ Failed to load recommendations: ${err.message}</p>
-          <button class="action-btn btn-primary" onclick="window.location.reload()" style="margin-top: 12px">Retry</button>
+          <button class="action-btn btn-primary" id="btnRetryRecs" style="margin-top: 12px">Retry Request</button>
         </div>
       `;
+      const retryBtn = document.getElementById('btnRetryRecs');
+      if (retryBtn) retryBtn.addEventListener('click', loadRecommendations);
     }
   }
 
   function renderRecommendations(items) {
+    if (!recommendationsGrid) return;
+
     if (!items || items.length === 0) {
       recommendationsGrid.innerHTML = `
         <div class="loading-state">
-          <p>No recommendations match the current filters. Try changing the genre filter or algorithm.</p>
+          <p>No recommendations match the current filters. Try changing the genre filter or switching algorithms.</p>
         </div>
       `;
       return;
@@ -405,35 +598,39 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Create Movie Card Component
+  // Movie Card Component Creation
   // ==========================================
   function createMovieCard(movie, rank, showExplainability = false) {
     const card = document.createElement('div');
     card.className = 'movie-card';
 
-    const matchPercent = Math.min(99, Math.max(60, Math.round((movie.predicted_score / 5.0) * 100)));
     const genreBadges = (movie.genres || [])
       .slice(0, 3)
       .map((g) => `<span class="genre-tag">${g}</span>`)
       .join('');
 
     const visualIcon = getGenreEmoji(movie.genres);
+    const scoreVal = movie.predicted_score
+      ? movie.predicted_score.toFixed(1)
+      : movie.bayesian_score
+      ? movie.bayesian_score.toFixed(1)
+      : '4.0';
 
     card.innerHTML = `
       <div class="card-visual">
         <span class="visual-pattern">${visualIcon}</span>
         ${rank ? `<div class="rank-index">#${rank}</div>` : ''}
-        <div class="score-badge">${movie.predicted_score ? `${movie.predicted_score.toFixed(1)}★` : `${movie.bayesian_score ? movie.bayesian_score.toFixed(1) : '4.0'}★`}</div>
+        <div class="score-badge">${scoreVal}★</div>
       </div>
       <div class="card-body">
-        <h3 class="movie-title" title="${movie.title}">
+        <h3 class="movie-title" title="${escapeHtml(movie.title)}">
           ${movie.title}
         </h3>
         <div class="genre-tags">${genreBadges}</div>
         
         ${
           showExplainability && movie.recommendation_signal
-            ? `<div class="explainability-box"><span class="signal-icon">💡</span>${movie.recommendation_signal}</div>`
+            ? `<div class="explainability-box"><span class="signal-icon">💡</span>${escapeHtml(movie.recommendation_signal)}</div>`
             : ''
         }
 
@@ -446,9 +643,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="star-btn" data-star="5" title="Rate 5 Stars">★</button>
           </div>
           <div class="quick-actions">
-            <button class="icon-btn btn-like" data-movie-id="${movie.movie_id}" title="Like">👍</button>
-            <button class="icon-btn btn-bookmark" data-movie-id="${movie.movie_id}" title="Bookmark">🔖</button>
-            <button class="icon-btn btn-details" data-movie-id="${movie.movie_id}" title="Details">ℹ️</button>
+            <button class="icon-btn btn-like" data-movie-id="${movie.movie_id}" title="Like Movie">👍</button>
+            <button class="icon-btn btn-bookmark" data-movie-id="${movie.movie_id}" title="Save to Watchlist">🔖</button>
+            <button class="icon-btn btn-details" data-movie-id="${movie.movie_id}" title="View Details">ℹ️</button>
           </div>
         </div>
       </div>
@@ -467,26 +664,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Like button
     const likeBtn = card.querySelector('.btn-like');
-    likeBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      likeBtn.classList.toggle('active');
-      submitFeedback(movie.movie_id, movie.title, 'like', 5.0);
-    });
+    if (likeBtn) {
+      likeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        likeBtn.classList.toggle('active');
+        submitFeedback(movie.movie_id, movie.title, 'like', 5.0);
+      });
+    }
 
     // Bookmark button
     const bmBtn = card.querySelector('.btn-bookmark');
-    bmBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      bmBtn.classList.toggle('active');
-      submitFeedback(movie.movie_id, movie.title, 'bookmark', 4.5);
-    });
+    if (bmBtn) {
+      bmBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        bmBtn.classList.toggle('active');
+        submitFeedback(movie.movie_id, movie.title, 'bookmark', 4.5);
+      });
+    }
 
     // Details button
     const detailsBtn = card.querySelector('.btn-details');
-    detailsBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openMovieDetails(movie);
-    });
+    if (detailsBtn) {
+      detailsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openMovieDetails(movie);
+      });
+    }
 
     return card;
   }
@@ -513,11 +716,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gStr.includes('thriller')) return '⚡';
     if (gStr.includes('romance')) return '❤️';
     if (gStr.includes('fantasy')) return '🔮';
+    if (gStr.includes('crime')) return '🕵️';
+    if (gStr.includes('documentary')) return '📜';
+    if (gStr.includes('mystery')) return '🔍';
+    if (gStr.includes('adventure')) return '🧭';
     return '🎬';
   }
 
   // ==========================================
-  // Feedback Submission & Closed Loop
+  // Feedback Closed-Loop Submission
   // ==========================================
   async function submitFeedback(movieId, movieTitle, interactionType, rating = null) {
     try {
@@ -534,15 +741,19 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error('Feedback error');
-      const data = await res.json();
+      if (!res.ok) throw new Error('Feedback request failed');
+      await res.json();
 
-      // Show toast
-      showToast(
-        `Recorded ${interactionType === 'rating' ? `${rating}★ rating` : interactionType} for "${movieTitle}"`
-      );
+      // Toast feedback confirmation
+      const actionText =
+        interactionType === 'rating'
+          ? `rated ${rating}★`
+          : interactionType === 'like'
+          ? 'liked'
+          : 'bookmarked';
+      showToast(`User ${state.userId} ${actionText} "${movieTitle}"`);
 
-      // Record in live feedback list
+      // Record in session live feedback log
       state.liveFeedback.unshift({
         movie_id: movieId,
         title: movieTitle,
@@ -551,30 +762,45 @@ document.addEventListener('DOMContentLoaded', () => {
         time: new Date().toLocaleTimeString(),
       });
 
-      feedbackCountBadge.textContent = state.liveFeedback.length;
+      if (feedbackCountBadge) {
+        feedbackCountBadge.textContent = state.liveFeedback.length;
+      }
 
-      // If user was cold start demo (User 9999), un-flag cold start banner
+      // If user was cold-start demo (User 9999), un-flag banner & update taste note
       if (state.userId === 9999) {
-        coldStartBanner.classList.add('hidden');
-        recUserTasteSummary.textContent = 'Taste Profile: Calibrating via live feedback events!';
+        if (coldStartBanner) coldStartBanner.classList.add('hidden');
+        if (recUserTasteSummary) {
+          recUserTasteSummary.textContent = 'Taste Profile: Calibrating live from new feedback events!';
+        }
+      }
+
+      // If on Profile view and Live Feedback tab is active, re-render
+      if (
+        document.getElementById('viewProfile').classList.contains('active') &&
+        tabLiveFeedback &&
+        tabLiveFeedback.classList.contains('active')
+      ) {
+        renderLiveFeedback();
       }
     } catch (err) {
       console.error('Feedback failed:', err);
-      showToast('Feedback recording failed', true);
+      showToast('Could not record feedback interaction', true);
     }
   }
 
   // ==========================================
-  // Toast Notifications
+  // Floating Toast Notifications
   // ==========================================
   function showToast(message, isError = false) {
+    if (!toastContainer) return;
+
     const toast = document.createElement('div');
     toast.className = 'toast';
     if (isError) toast.style.borderColor = 'var(--accent-rose)';
 
     toast.innerHTML = `
       <span>${isError ? '⚠️' : '✅'}</span>
-      <span>${message}</span>
+      <span>${escapeHtml(message)}</span>
     `;
 
     toastContainer.appendChild(toast);
@@ -587,13 +813,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Catalog Explorer
+  // Catalog Explorer Loader & Renderer
   // ==========================================
   async function loadCatalog() {
+    if (!catalogGrid) return;
+
     catalogGrid.innerHTML = `
       <div class="loading-state">
         <div class="spinner"></div>
-        <p>Loading catalog items...</p>
+        <p>Loading MovieLens catalog items...</p>
       </div>
     `;
 
@@ -611,22 +839,30 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
 
       state.catalogTotalPages = data.total_pages;
-      catalogPageInfo.textContent = `Page ${data.page} of ${data.total_pages}`;
-      catalogCountInfo.textContent = `Showing ${Math.min(data.total_count, (data.page - 1) * 18 + 1)}-${Math.min(data.total_count, data.page * 18)} of ${data.total_count.toLocaleString()} movies`;
+      if (catalogPageInfo) {
+        catalogPageInfo.textContent = `Page ${data.page} of ${data.total_pages}`;
+      }
+      if (catalogCountInfo) {
+        const startIdx = Math.min(data.total_count, (data.page - 1) * 18 + 1);
+        const endIdx = Math.min(data.total_count, data.page * 18);
+        catalogCountInfo.textContent = `Showing ${startIdx}-${endIdx} of ${data.total_count.toLocaleString()} movies`;
+      }
 
-      btnPrevPage.disabled = data.page <= 1;
-      btnNextPage.disabled = data.page >= data.total_pages;
+      if (btnPrevPage) btnPrevPage.disabled = data.page <= 1;
+      if (btnNextPage) btnNextPage.disabled = data.page >= data.total_pages;
 
       renderCatalog(data.movies || []);
     } catch (err) {
       console.error('Catalog load error:', err);
-      catalogGrid.innerHTML = `<div class="loading-state" style="color:var(--accent-rose)">Failed to load catalog.</div>`;
+      catalogGrid.innerHTML = `<div class="loading-state" style="color:var(--accent-rose)">Failed to load catalog movies.</div>`;
     }
   }
 
   function renderCatalog(movies) {
+    if (!catalogGrid) return;
+
     if (!movies || movies.length === 0) {
-      catalogGrid.innerHTML = `<div class="loading-state"><p>No movies found matching search criteria.</p></div>`;
+      catalogGrid.innerHTML = `<div class="loading-state"><p>No movies match your search filters.</p></div>`;
       return;
     }
 
@@ -638,7 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // User Profile
+  // User Profile Loader & Views
   // ==========================================
   let cachedUserProfile = null;
   async function loadUserProfile() {
@@ -647,42 +883,55 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) return;
       cachedUserProfile = await res.json();
 
-      profileLargeAvatar.textContent = `U${cachedUserProfile.user_id === 9999 ? '★' : cachedUserProfile.user_id}`;
-      profileName.textContent = `User ${cachedUserProfile.user_id}`;
-      profileRatedCount.textContent = cachedUserProfile.ratings_count;
-      profileMeanRating.textContent = `${cachedUserProfile.average_rating} ★`;
-
-      if (cachedUserProfile.top_genres && cachedUserProfile.top_genres.length > 0) {
-        profilePrimaryTaste.textContent = cachedUserProfile.top_genres[0].genre;
-      } else {
-        profilePrimaryTaste.textContent = 'General / New User';
+      if (profileLargeAvatar) {
+        profileLargeAvatar.textContent = `U${cachedUserProfile.user_id === 9999 ? '★' : cachedUserProfile.user_id}`;
+      }
+      if (profileName) {
+        profileName.textContent = `User ${cachedUserProfile.user_id}`;
+      }
+      if (profileRatedCount) {
+        profileRatedCount.textContent = cachedUserProfile.ratings_count.toLocaleString();
+      }
+      if (profileMeanRating) {
+        profileMeanRating.textContent = `${cachedUserProfile.average_rating} ★`;
       }
 
-      // Render Genre Bars
-      profileGenreBars.innerHTML = '';
-      if (cachedUserProfile.top_genres && cachedUserProfile.top_genres.length > 0) {
-        cachedUserProfile.top_genres.forEach((g) => {
-          const pct = Math.min(100, Math.round((g.affinity_score / 5.0) * 100));
-          const bar = document.createElement('div');
-          bar.className = 'genre-bar-item';
-          bar.innerHTML = `
-            <div class="genre-bar-header">
-              <span>${g.genre}</span>
-              <strong>${g.affinity_score.toFixed(1)}★ (${pct}%)</strong>
-            </div>
-            <div class="progress-bar-container">
-              <div class="progress-fill fill-cyan" style="width: ${pct}%"></div>
-            </div>
-          `;
-          profileGenreBars.appendChild(bar);
-        });
-      } else {
-        profileGenreBars.innerHTML = '<p style="font-size:0.8rem;color:var(--text-dim)">No historical ratings to compute genre affinities.</p>';
+      if (profilePrimaryTaste) {
+        if (cachedUserProfile.top_genres && cachedUserProfile.top_genres.length > 0) {
+          profilePrimaryTaste.textContent = cachedUserProfile.top_genres[0].genre;
+        } else {
+          profilePrimaryTaste.textContent = 'General / Cold-Start';
+        }
       }
 
-      // Default to historical ratings tab
-      tabHistoricalRatings.classList.add('active');
-      tabLiveFeedback.classList.remove('active');
+      // Render Genre Affinities
+      if (profileGenreBars) {
+        profileGenreBars.innerHTML = '';
+        if (cachedUserProfile.top_genres && cachedUserProfile.top_genres.length > 0) {
+          cachedUserProfile.top_genres.forEach((g) => {
+            const pct = Math.min(100, Math.round((g.affinity_score / 5.0) * 100));
+            const bar = document.createElement('div');
+            bar.className = 'genre-bar-item';
+            bar.innerHTML = `
+              <div class="genre-bar-header">
+                <span>${g.genre}</span>
+                <strong>${g.affinity_score.toFixed(1)}★ (${pct}%)</strong>
+              </div>
+              <div class="progress-bar-container">
+                <div class="progress-fill fill-cyan" style="width: ${pct}%"></div>
+              </div>
+            `;
+            profileGenreBars.appendChild(bar);
+          });
+        } else {
+          profileGenreBars.innerHTML =
+            '<p style="font-size:0.85rem;color:var(--text-dim)">No historical ratings to compute genre affinities.</p>';
+        }
+      }
+
+      // Default to Historical Ratings Tab
+      if (tabHistoricalRatings) tabHistoricalRatings.classList.add('active');
+      if (tabLiveFeedback) tabLiveFeedback.classList.remove('active');
       renderHistoricalRatings();
     } catch (err) {
       console.error('Error loading user profile:', err);
@@ -690,8 +939,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderHistoricalRatings() {
+    if (!historyContent) return;
+
     if (!cachedUserProfile || !cachedUserProfile.recent_ratings || cachedUserProfile.recent_ratings.length === 0) {
-      historyContent.innerHTML = '<p style="color:var(--text-dim);font-size:0.85rem">No historical ratings found for this profile.</p>';
+      historyContent.innerHTML =
+        '<p style="color:var(--text-dim);font-size:0.9rem;padding:16px;">No historical ratings recorded for this user profile.</p>';
       return;
     }
 
@@ -700,7 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const item = document.createElement('div');
       item.className = 'history-item';
       item.innerHTML = `
-        <span class="history-title">${r.title}</span>
+        <span class="history-title">${escapeHtml(r.title)}</span>
         <span class="history-rating">${r.rating.toFixed(1)} ★</span>
       `;
       historyContent.appendChild(item);
@@ -708,8 +960,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderLiveFeedback() {
+    if (!historyContent) return;
+
     if (state.liveFeedback.length === 0) {
-      historyContent.innerHTML = '<p style="color:var(--text-dim);font-size:0.85rem">No live feedback recorded yet in this session. Rate or like movies in "For You" or "Catalog" to see live updates!</p>';
+      historyContent.innerHTML =
+        '<p style="color:var(--text-dim);font-size:0.9rem;padding:16px;">No live feedback recorded yet in this session. Rate or like movies in "Recommendations" or "Explore Movies" to see live updates!</p>';
       return;
     }
 
@@ -718,7 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const item = document.createElement('div');
       item.className = 'history-item';
       item.innerHTML = `
-        <span class="history-title">${f.title} <small style="color:var(--text-dim)">(${f.type})</small></span>
+        <span class="history-title">${escapeHtml(f.title)} <small style="color:var(--text-dim);margin-left:6px;">(${f.type} at ${f.time})</small></span>
         <span class="history-rating">${f.rating ? `${f.rating}★` : f.type}</span>
       `;
       historyContent.appendChild(item);
@@ -726,7 +981,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Model Evaluation Dashboard
+  // Model Evaluation Dashboard Renderer
   // ==========================================
   function renderEvaluationTable() {
     if (!state.evaluationMetrics) return;
@@ -739,9 +994,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const modelDisplayNames = {
       popularity: 'Popularity Baseline',
-      item_collaborative: 'Item-Item Collaborative',
-      matrix_factorization_svd: 'Latent Factor SVD',
-      hybrid: 'Two-Stage Hybrid Engine (Production)',
+      item_collaborative: 'Item-Item Collaborative Filtering',
+      matrix_factorization_svd: 'Latent Factor SVD (35-dim)',
+      hybrid: 'Two-Stage Hybrid Engine (👑 Production Winner)',
     };
 
     Object.keys(models).forEach((key) => {
@@ -753,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isWinner) tr.className = 'highlight-row';
 
       tr.innerHTML = `
-        <td><strong>${isWinner ? '👑 ' : ''}${modelDisplayNames[key] || m.model_name}</strong></td>
+        <td><strong>${modelDisplayNames[key] || m.model_name}</strong></td>
         <td>${(metrics['precision@5'] || 0).toFixed(4)}</td>
         <td><strong>${(metrics['precision@10'] || 0).toFixed(4)}</strong></td>
         <td>${(metrics['recall@5'] || 0).toFixed(4)}</td>
@@ -768,43 +1023,48 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Movie Detail Modal
+  // Movie Detail Modal Controller
   // ==========================================
   function openMovieDetails(movie) {
+    if (!modalBody || !movieDetailModal) return;
+
+    const safeTitle = escapeHtml(movie.title);
+    const genresHtml = (movie.genres || []).map((g) => `<span class="genre-tag">${g}</span>`).join('');
+
     modalBody.innerHTML = `
-      <h2 style="margin-bottom: 6px;">${movie.title}</h2>
-      <div style="display:flex;gap:6px;margin-bottom:16px;">
-        ${(movie.genres || []).map((g) => `<span class="genre-tag">${g}</span>`).join('')}
+      <h2 style="margin-bottom: 6px; font-size: 1.4rem;">${safeTitle}</h2>
+      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+        ${genresHtml}
       </div>
 
-      <div style="background:rgba(255,255,255,0.03);padding:14px;border-radius:var(--radius-md);margin-bottom:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+      <div style="background:var(--bg-glass-card);border:1px solid var(--border-subtle);padding:14px;border-radius:var(--radius-md);margin-bottom:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
         <div>
           <span style="font-size:0.75rem;color:var(--text-dim)">Average Rating</span>
-          <div style="font-size:1.2rem;font-weight:700;color:var(--accent-amber)">${movie.rating_mean ? movie.rating_mean.toFixed(1) : '—'}★</div>
+          <div style="font-size:1.25rem;font-weight:700;color:var(--accent-amber)">${movie.rating_mean ? movie.rating_mean.toFixed(1) : '—'}★</div>
         </div>
         <div>
           <span style="font-size:0.75rem;color:var(--text-dim)">Total Ratings</span>
-          <div style="font-size:1.2rem;font-weight:700;color:var(--text-main)">${movie.rating_count ? movie.rating_count.toLocaleString() : '—'}</div>
+          <div style="font-size:1.25rem;font-weight:700;color:var(--text-main)">${movie.rating_count ? movie.rating_count.toLocaleString() : '—'}</div>
         </div>
         <div>
           <span style="font-size:0.75rem;color:var(--text-dim)">Predicted Affinity</span>
-          <div style="font-size:1.2rem;font-weight:700;color:var(--accent-cyan)">${movie.predicted_score ? `${movie.predicted_score.toFixed(1)}★` : '—'}</div>
+          <div style="font-size:1.25rem;font-weight:700;color:var(--accent-cyan)">${movie.predicted_score ? `${movie.predicted_score.toFixed(1)}★` : '—'}</div>
         </div>
       </div>
 
       <div style="margin-bottom:16px;">
         <h4 style="font-size:0.9rem;margin-bottom:8px;color:var(--text-main)">Rate This Title</h4>
-        <div class="star-rating-widget" style="font-size:1.4rem;">
-          <button class="star-btn" onclick="submitModalRating(${movie.movie_id}, '${escapeQuote(movie.title)}', 1)">★</button>
-          <button class="star-btn" onclick="submitModalRating(${movie.movie_id}, '${escapeQuote(movie.title)}', 2)">★</button>
-          <button class="star-btn" onclick="submitModalRating(${movie.movie_id}, '${escapeQuote(movie.title)}', 3)">★</button>
-          <button class="star-btn" onclick="submitModalRating(${movie.movie_id}, '${escapeQuote(movie.title)}', 4)">★</button>
-          <button class="star-btn" onclick="submitModalRating(${movie.movie_id}, '${escapeQuote(movie.title)}', 5)">★</button>
+        <div class="star-rating-widget" id="modalStars" style="font-size:1.5rem;">
+          <button class="star-btn" data-star="1">★</button>
+          <button class="star-btn" data-star="2">★</button>
+          <button class="star-btn" data-star="3">★</button>
+          <button class="star-btn" data-star="4">★</button>
+          <button class="star-btn" data-star="5">★</button>
         </div>
       </div>
 
       <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-subtle)">
-        <button class="action-btn btn-primary" onclick="findSimilarMovies(${movie.movie_id}, '${escapeQuote(movie.title)}')">
+        <button class="action-btn btn-primary" id="btnFindSimilar" style="width:100%;justify-content:center;">
           Find Movies Similar To This
         </button>
       </div>
@@ -812,34 +1072,45 @@ document.addEventListener('DOMContentLoaded', () => {
       <div id="modalSimilarMovies" style="margin-top:16px;"></div>
     `;
 
+    // Hook up modal star ratings
+    const modalStars = modalBody.querySelectorAll('#modalStars .star-btn');
+    modalStars.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const rating = parseFloat(btn.getAttribute('data-star'));
+        submitFeedback(movie.movie_id, movie.title, 'rating', rating);
+        highlightStars(modalStars, rating);
+      });
+    });
+
+    // Hook up Similar Movies button
+    const btnFindSimilar = modalBody.querySelector('#btnFindSimilar');
+    if (btnFindSimilar) {
+      btnFindSimilar.addEventListener('click', () => {
+        findSimilarMovies(movie.movie_id, movie.title);
+      });
+    }
+
     movieDetailModal.classList.remove('hidden');
   }
 
-  function escapeQuote(str) {
-    return str.replace(/'/g, "\\'");
-  }
-
   function closeModal() {
-    movieDetailModal.classList.add('hidden');
+    if (movieDetailModal) {
+      movieDetailModal.classList.add('hidden');
+    }
   }
 
-  // Global helper for modal rating
-  window.submitModalRating = function (movieId, title, rating) {
-    submitFeedback(movieId, title, 'rating', rating);
-  };
-
-  // Find similar movies
-  window.findSimilarMovies = async function (movieId, title) {
+  async function findSimilarMovies(movieId, title) {
     const container = document.getElementById('modalSimilarMovies');
+    if (!container) return;
+
     container.innerHTML = '<div class="spinner" style="width:24px;height:24px;margin:12px auto;"></div>';
 
     try {
-      // Query recommendation using item_collaborative centered on this movie or similar
       const res = await fetch(`/api/recommend/${state.userId}?k=4&model_type=item_collaborative`);
       if (!res.ok) throw new Error('Similar fetch failed');
       const data = await res.json();
 
-      container.innerHTML = '<h5 style="margin-bottom:8px;font-size:0.85rem;color:var(--accent-cyan)">Similar Recommendations:</h5>';
+      container.innerHTML = '<h5 style="margin-bottom:8px;font-size:0.85rem;color:var(--accent-cyan)">Similar Recommendations via Collaborative Filtering:</h5>';
       const list = document.createElement('div');
       list.style.display = 'flex';
       list.style.flexDirection = 'column';
@@ -848,15 +1119,34 @@ document.addEventListener('DOMContentLoaded', () => {
       (data.recommendations || []).forEach((m) => {
         const row = document.createElement('div');
         row.className = 'history-item';
-        row.innerHTML = `<span>${m.title}</span><span style="color:var(--accent-cyan)">${m.predicted_score.toFixed(1)}★</span>`;
+        row.innerHTML = `
+          <span>${escapeHtml(m.title)}</span>
+          <span style="color:var(--accent-cyan);font-weight:600;">${m.predicted_score.toFixed(1)}★</span>
+        `;
         list.appendChild(row);
       });
       container.appendChild(list);
     } catch (e) {
       container.innerHTML = '<p style="color:var(--text-dim);font-size:0.8rem">Could not load similar items.</p>';
     }
-  };
+  }
 
-  // Start Application
+  // ==========================================
+  // Helper Utilities
+  // ==========================================
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // Expose global tab switcher for inline anchors if needed
+  window.switchTab = switchTab;
+
+  // Initialize Application
   init();
 });

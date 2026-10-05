@@ -29,8 +29,7 @@ venv/
 ENV/
 
 # Data and caches
-data/raw/*.zip
-data/cache/*.json
+data/
 .pytest_cache/
 .coverage
 htmlcov/
