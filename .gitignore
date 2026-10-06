@@ -29,7 +29,7 @@ venv/
 ENV/
 
 # Data and caches
-data/
+/data/
 .pytest_cache/
 .coverage
 htmlcov/

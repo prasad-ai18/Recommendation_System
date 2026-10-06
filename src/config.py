@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # Application Configuration
     APP_NAME: str = "Personalized Recommendation Intelligence Platform"
     APP_ENV: str = "development"
-    HOST: str = "127.0.0.1"
+    HOST: str = "0.0.0.0"
     PORT: int = 8000
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"

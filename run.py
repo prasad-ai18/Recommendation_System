@@ -13,16 +13,19 @@ from src.logger import logger
 
 
 def main():
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8000"))
+
     logger.info("=" * 70)
     logger.info("STARTING: Personalized Recommendation Intelligence Platform")
-    logger.info(f"Host: http://{settings.HOST}:{settings.PORT}")
-    logger.info(f"API Docs: http://{settings.HOST}:{settings.PORT}/docs")
+    logger.info(f"Host: http://{host}:{port}")
+    logger.info(f"API Docs: http://{host}:{port}/docs")
     logger.info("=" * 70)
 
     uvicorn.run(
         "src.api.app:app",
-        host=settings.HOST,
-        port=settings.PORT,
+        host=host,
+        port=port,
         reload=settings.DEBUG,
         log_level=settings.LOG_LEVEL.lower(),
     )

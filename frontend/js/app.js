@@ -5,10 +5,11 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Active Themes: Vercel Dark (Default) & Vercel Light
+  // Active Themes: Dark (Default), Light (Day), Antigravity
   const THEMES = [
-    { id: 'vercel-dark', name: 'Vercel Dark', icon: '▲' },
-    { id: 'vercel-light', name: 'Vercel Light', icon: '☀️' },
+    { id: 'vercel-dark', name: 'Night Mode', icon: '🌙' },
+    { id: 'vercel-light', name: 'Day Mode', icon: '☀️' },
+    { id: 'antigravity', name: 'Antigravity', icon: '✦' },
   ];
 
   // ==========================================
@@ -182,13 +183,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, { passive: true });
 
-    // Smooth lerp follower loop for ring and ambient glow
+    // Smooth lerp follower loop for ring and ambient glow — fast & responsive
     function renderCursor() {
-      ringPos.x += (mouse.x - ringPos.x) * 0.22;
-      ringPos.y += (mouse.y - ringPos.y) * 0.22;
+      ringPos.x += (mouse.x - ringPos.x) * 0.42;
+      ringPos.y += (mouse.y - ringPos.y) * 0.42;
 
-      glowPos.x += (mouse.x - glowPos.x) * 0.08;
-      glowPos.y += (mouse.y - glowPos.y) * 0.08;
+      glowPos.x += (mouse.x - glowPos.x) * 0.18;
+      glowPos.y += (mouse.y - glowPos.y) * 0.18;
 
       if (cursorRing) {
         cursorRing.style.left = `${ringPos.x}px`;
@@ -373,12 +374,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Theme Management (Google Antigravity, Vercel Dark, Vercel Light)
   // ==========================================
   function initTheme() {
-    // Validate saved theme or default to antigravity
+    // Default to vercel-dark (night mode)
     if (!THEMES.some((t) => t.id === state.theme)) {
       state.theme = 'vercel-dark';
     }
     document.documentElement.setAttribute('data-theme', state.theme);
-    updateThemeUI();
+    updateDayNightIcon();
   }
 
   function cycleTheme() {
@@ -387,17 +388,20 @@ document.addEventListener('DOMContentLoaded', () => {
     state.theme = THEMES[nextIndex].id;
     document.documentElement.setAttribute('data-theme', state.theme);
     localStorage.setItem('cinema_theme', state.theme);
-    updateThemeUI();
-    showToast(`Theme switched to ${THEMES[nextIndex].name}`);
+    updateDayNightIcon();
+    showToast(`Theme: ${THEMES[nextIndex].name}`);
+  }
+
+  function updateDayNightIcon() {
+    const dayNightIcon = document.getElementById('dayNightIcon');
+    const currentTheme = THEMES.find((t) => t.id === state.theme) || THEMES[0];
+    if (dayNightIcon) dayNightIcon.textContent = currentTheme.icon;
+    const btn = document.getElementById('dayNightToggle');
+    if (btn) btn.setAttribute('title', `${currentTheme.name} (click to switch)`);
   }
 
   function updateThemeUI() {
-    const currentTheme = THEMES.find((t) => t.id === state.theme) || THEMES[0];
-    if (themeIcon) themeIcon.textContent = currentTheme.icon;
-    if (themeLabel) themeLabel.textContent = currentTheme.name;
-    if (themeToggleBtn) {
-      themeToggleBtn.setAttribute('title', `Active Theme: ${currentTheme.name} (Click to switch)`);
-    }
+    updateDayNightIcon();
   }
 
   // ==========================================
@@ -734,9 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnHeroGoRecs) {
       btnHeroGoRecs.addEventListener('click', () => switchTab('recommendations'));
     }
-    if (btnHeroGoEvaluation) {
-      btnHeroGoEvaluation.addEventListener('click', () => switchTab('evaluation'));
-    }
+    // btnHeroGoEvaluation removed (Benchmarks section deleted)
     if (btnHeroGoArchitecture) {
       btnHeroGoArchitecture.addEventListener('click', () => switchTab('architecture'));
     }
@@ -797,6 +799,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   function setupEventListeners() {
     // Theme Switcher Button -> Cycles Antigravity -> Vercel Dark -> Vercel Light
+    // Day/Night Toggle Button
+    const dayNightToggle = document.getElementById('dayNightToggle');
+    if (dayNightToggle) {
+      dayNightToggle.addEventListener('click', cycleTheme);
+    }
+
     if (themeToggleBtn) {
       themeToggleBtn.addEventListener('click', cycleTheme);
     }
@@ -1284,6 +1292,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <h3 class="movie-title" title="${escapeHtml(movie.title)}">
           ${escapeHtml(movie.title)}
         </h3>
+        <a class="movie-tmdb-link" href="https://www.google.com/search?q=${encodeURIComponent(movie.title + ' movie watch online')}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Search online for ${escapeHtml(movie.title)}">
+          🔗 Watch / Download Online
+        </a>
         <div class="genre-tags">${genreBadges}</div>
         
         ${

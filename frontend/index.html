@@ -50,13 +50,15 @@
         <button class="nav-tab" data-tab="recommendations" id="tabRecommendations">For You</button>
         <button class="nav-tab" data-tab="catalog" id="tabCatalog">Explore</button>
         <button class="nav-tab" data-tab="profile" id="tabProfile">Profile</button>
-        <button class="nav-tab" data-tab="analytics" id="tabAnalytics">Intelligence</button>
-        <button class="nav-tab" data-tab="evaluation" id="tabEvaluation">Benchmarks</button>
         <button class="nav-tab" data-tab="architecture" id="tabArchitecture">Architecture</button>
       </nav>
 
-      <!-- Right Controls: Clean Production Account Authentication -->
+      <!-- Right Controls: Day/Night Toggle + Account Authentication -->
       <div class="nav-user-control">
+        <!-- Day / Night Theme Toggle -->
+        <button class="day-night-toggle" id="dayNightToggle" title="Toggle Day / Night Theme" aria-label="Toggle Day Night Theme">
+          <span class="day-night-icon" id="dayNightIcon">🌙</span>
+        </button>
         <!-- Sign In Button (shown when unauthenticated) -->
         <button class="action-btn btn-primary nav-signin-btn" id="btnNavSignIn" style="padding: 7px 16px; font-size: 0.84rem;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
@@ -120,9 +122,6 @@
           <div class="hero-actions">
             <button class="action-btn btn-primary" id="btnHeroGoRecs">
               Explore Your Mix &rarr;
-            </button>
-            <button class="action-btn btn-secondary" id="btnHeroGoEvaluation">
-              Live Benchmarks
             </button>
             <button class="action-btn btn-secondary" id="btnHeroGoArchitecture">
               Architecture
@@ -396,10 +395,11 @@
         </div>
       </section>
 
+      <!-- INTELLIGENCE / ANALYTICS VIEW REMOVED -->
       <!-- ========================================== -->
-      <!-- VIEW 5: INTELLIGENCE ENGINE (ANALYTICS)    -->
+      <!-- [HIDDEN] ANALYTICS (removed per user request) -->
       <!-- ========================================== -->
-      <section class="view-panel" id="viewAnalytics">
+      <section class="view-panel" id="viewAnalytics" style="display:none !important;">
         <div class="analytics-grid">
           <!-- Metric Card 1 -->
           <div class="analytics-card glass-panel">
@@ -493,10 +493,11 @@
         </div>
       </section>
 
+      <!-- BENCHMARKS VIEW REMOVED -->
       <!-- ========================================== -->
-      <!-- VIEW 6: BENCHMARKS (MODEL EVALUATION)      -->
+      <!-- [HIDDEN] EVALUATION (removed per user request) -->
       <!-- ========================================== -->
-      <section class="view-panel" id="viewEvaluation">
+      <section class="view-panel" id="viewEvaluation" style="display:none !important;">
         <div class="evaluation-container">
           <div class="eval-hero glass-panel">
             <div class="eval-hero-header">

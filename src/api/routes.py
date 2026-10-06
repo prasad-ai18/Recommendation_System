@@ -144,7 +144,14 @@ def get_recommendations(
 
     # Check if user is known
     hybrid_model = registry.get_model("hybrid")
-    user_ratings = getattr(hybrid_model, "user_ratings", {}).get(user_id, {})
+    if user_id <= 610:
+        user_ratings = getattr(hybrid_model, "user_ratings", {}).get(user_id, {})
+    else:
+        try:
+            from src.data.db import get_user_ratings as db_get_user_ratings
+            user_ratings = db_get_user_ratings(user_id)
+        except Exception:
+            user_ratings = {}
     is_cold_start = len(user_ratings) == 0
 
     try:
@@ -374,8 +381,12 @@ def get_user_profile(
     movie_meta = getattr(registry.get_model("popularity"), "movie_meta", {}) if registry else {}
     hybrid_model = registry.get_model("hybrid") if registry else None
 
-    user_ratings = dict(getattr(hybrid_model, "user_ratings", {}).get(user_id, {}))
-    affinities = dict(getattr(hybrid_model, "user_genre_affinities", {}).get(user_id, {}))
+    if user_id <= 610:
+        user_ratings = dict(getattr(hybrid_model, "user_ratings", {}).get(user_id, {}))
+        affinities = dict(getattr(hybrid_model, "user_genre_affinities", {}).get(user_id, {}))
+    else:
+        user_ratings = {}
+        affinities = {}
 
     # Merge persisted database ratings
     try:
@@ -383,6 +394,10 @@ def get_user_profile(
         db_ratings = db_get_user_ratings(user_id)
         if db_ratings:
             user_ratings.update(db_ratings)
+            for m_id, r in db_ratings.items():
+                meta = movie_meta.get(m_id, {})
+                for g in meta.get("genres", []):
+                    affinities[g] = affinities.get(g, 0.0) + (r - 2.5)
     except Exception as e:
         logger.warning(f"Could not load database ratings for user {user_id}: {e}")
 
