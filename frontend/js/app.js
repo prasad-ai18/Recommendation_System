@@ -5,57 +5,6 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // ==========================================
-  // Default Profiles (Real MovieLens Archetypes)
-  // ==========================================
-  const DEFAULT_PROFILES = [
-    {
-      userId: 1,
-      name: 'Alex Vance',
-      avatar: 'A',
-      color: 'linear-gradient(135deg, #00f0ff 0%, #7928ca 100%)',
-      role: 'Sci-Fi & Action Aficionado',
-      ratingsCount: 232,
-      primaryGenre: 'Sci-Fi',
-    },
-    {
-      userId: 2,
-      name: 'Sarah Connor',
-      avatar: 'S',
-      color: 'linear-gradient(135deg, #06d6a0 0%, #118ab2 100%)',
-      role: 'Action & Crime Enthusiast',
-      ratingsCount: 29,
-      primaryGenre: 'Action',
-    },
-    {
-      userId: 3,
-      name: 'Marcus Cole',
-      avatar: 'M',
-      color: 'linear-gradient(135deg, #ffb703 0%, #fb8500 100%)',
-      role: 'Classic Cinema & Drama',
-      ratingsCount: 39,
-      primaryGenre: 'Drama',
-    },
-    {
-      userId: 4,
-      name: 'Elena Rostova',
-      avatar: 'E',
-      color: 'linear-gradient(135deg, #ff0054 0%, #ff5400 100%)',
-      role: 'Comedy & Classics Aficionado',
-      ratingsCount: 216,
-      primaryGenre: 'Comedy',
-    },
-    {
-      userId: 9999,
-      name: 'Guest Explorer',
-      avatar: '★',
-      color: 'linear-gradient(135deg, #9d4edd 0%, #3a0ca3 100%)',
-      role: 'Cold-Start Discovery Profile',
-      ratingsCount: 0,
-      primaryGenre: 'Uncalibrated',
-    },
-  ];
-
   // Active Themes: Vercel Dark (Default) & Vercel Light
   const THEMES = [
     { id: 'vercel-dark', name: 'Vercel Dark', icon: '▲' },
@@ -63,16 +12,15 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   // ==========================================
-  // Application State
+  // Application State (Clean Production)
   // ==========================================
   const state = {
-    userId: parseInt(localStorage.getItem('cinema_active_user_id'), 10) || 1,
-    currentUser: null,
-    savedProfiles: [],
+    userId: 1, // Fallback browsing user ID for public explore
+    currentUser: null, // Starts strictly null (unauthenticated)
+    authToken: localStorage.getItem('cinema_auth_token') || null,
     modelType: 'hybrid',
     k: 10,
     genreFilter: '',
-    theme: localStorage.getItem('cinema_theme') || 'vercel-dark',
     catalogQuery: '',
     catalogGenre: '',
     catalogSort: 'bayesian_score',
@@ -115,7 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeLabel = document.getElementById('themeLabel');
   const userSelect = document.getElementById('userSelect');
 
-  // Account Popover Elements
+  // Authentication & Account Elements
+  const btnNavSignIn = document.getElementById('btnNavSignIn');
   const userAccountWrapper = document.getElementById('userAccountWrapper');
   const userChipBtn = document.getElementById('userChipBtn');
   const navUserAvatar = document.getElementById('navUserAvatar');
@@ -123,10 +72,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const accountDropdownMenu = document.getElementById('accountDropdownMenu');
   const menuUserAvatar = document.getElementById('menuUserAvatar');
   const menuUserName = document.getElementById('menuUserName');
-  const menuUserTaste = document.getElementById('menuUserTaste');
+  const menuUserEmail = document.getElementById('menuUserEmail');
   const btnMenuProfile = document.getElementById('btnMenuProfile');
-  const accountProfilesList = document.getElementById('accountProfilesList');
-  const btnProfileSwitchUser = document.getElementById('btnProfileSwitchUser');
+  const btnMenuSignOut = document.getElementById('btnMenuSignOut');
+  const btnProfileSignOut = document.getElementById('btnProfileSignOut');
+
+  // Auth Modal Elements
+  const authModalOverlay = document.getElementById('authModalOverlay');
+  const authModalBox = document.getElementById('authModalBox');
+  const btnCloseAuthModal = document.getElementById('btnCloseAuthModal');
+  const tabAuthSignIn = document.getElementById('tabAuthSignIn');
+  const tabAuthSignUp = document.getElementById('tabAuthSignUp');
+  const formSignIn = document.getElementById('formSignIn');
+  const formSignUp = document.getElementById('formSignUp');
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  const signupName = document.getElementById('signupName');
+  const signupEmail = document.getElementById('signupEmail');
+  const signupPassword = document.getElementById('signupPassword');
+  const authErrorAlert = document.getElementById('authErrorAlert');
 
   // Hero Controls
   const btnHeroGoRecs = document.getElementById('btnHeroGoRecs');
@@ -182,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   async function init() {
     initTheme();
-    initUserProfiles();
+    await checkAuthSession();
     setupTabNavigation();
     setupEventListeners();
     initAntigravityCanvas();
@@ -437,116 +401,282 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // Multi-User Profile Management & Storage
+  // Production Authentication & Session Flow
   // ==========================================
-  function initUserProfiles() {
-    const rawSaved = localStorage.getItem('cinema_user_profiles');
-    if (rawSaved) {
-      try {
-        state.savedProfiles = JSON.parse(rawSaved);
-      } catch (e) {
-        state.savedProfiles = [...DEFAULT_PROFILES];
-      }
-    } else {
-      state.savedProfiles = [...DEFAULT_PROFILES];
-      saveProfilesToStorage();
+  async function checkAuthSession() {
+    // Thoroughly purge any obsolete demo/mock profile storage keys
+    localStorage.removeItem('cinema_user_profiles');
+    localStorage.removeItem('cinema_active_user_id');
+
+    const token = localStorage.getItem('cinema_auth_token');
+    if (!token) {
+      state.currentUser = null;
+      state.userId = 1;
+      updateAuthUI();
+      return;
     }
 
-    let active = state.savedProfiles.find((p) => p.userId === state.userId);
-    if (!active) {
-      active = state.savedProfiles[0];
-      state.userId = active.userId;
-      localStorage.setItem('cinema_active_user_id', state.userId);
-    }
-    state.currentUser = active;
-    syncUserUI();
-    renderAccountProfilesList();
-  }
-
-  function saveProfilesToStorage() {
-    localStorage.setItem('cinema_user_profiles', JSON.stringify(state.savedProfiles));
-  }
-
-  function setActiveUser(profile, navigateToRecs = true) {
-    state.currentUser = profile;
-    state.userId = profile.userId;
-    localStorage.setItem('cinema_active_user_id', profile.userId);
-
-    if (userSelect) {
-      userSelect.value = profile.userId;
-    }
-
-    syncUserUI();
-    renderAccountProfilesList();
-    loadRecommendations();
-    if (document.getElementById('viewProfile').classList.contains('active')) {
-      loadUserProfile();
-    }
-    showToast(`Active profile: ${profile.name}`);
-
-    if (navigateToRecs) {
-      switchTab('recommendations');
-    }
-  }
-
-  function syncUserUI() {
-    const u = state.currentUser;
-    if (!u) return;
-
-    if (navUserAvatar) {
-      navUserAvatar.textContent = u.avatar;
-      navUserAvatar.style.background = u.color || 'var(--accent-gradient)';
-    }
-    if (navUserName) navUserName.textContent = u.name;
-
-    if (menuUserAvatar) {
-      menuUserAvatar.textContent = u.avatar;
-      menuUserAvatar.style.background = u.color || 'var(--accent-gradient)';
-    }
-    if (menuUserName) menuUserName.textContent = u.name;
-    if (menuUserTaste) menuUserTaste.textContent = u.role;
-
-    if (recUserAvatar) {
-      recUserAvatar.textContent = u.avatar;
-      recUserAvatar.style.background = u.color || 'var(--accent-gradient)';
-    }
-    if (recUserTitle) recUserTitle.textContent = `Curated for ${u.name}`;
-    if (recUserTasteSummary) {
-      if (u.userId === 9999) {
-        recUserTasteSummary.textContent = 'Taste Signature: Uncalibrated Cold-Start Profile (Zero prior history)';
-      } else {
-        recUserTasteSummary.textContent = `Taste Signature: ${u.role} (${u.ratingsCount} verified ratings)`;
-      }
-    }
-  }
-
-  function renderAccountProfilesList() {
-    if (!accountProfilesList) return;
-    accountProfilesList.innerHTML = '';
-
-    state.savedProfiles.forEach((profile) => {
-      const item = document.createElement('div');
-      const isActive = profile.userId === state.userId;
-      item.className = `account-profile-item ${isActive ? 'active' : ''}`;
-
-      item.innerHTML = `
-        <div class="menu-avatar-small" style="background: ${profile.color || 'var(--accent-gradient)'}">${profile.avatar}</div>
-        <div class="menu-profile-info">
-          <span class="menu-profile-name">${escapeHtml(profile.name)}</span>
-          <span class="menu-profile-role">${escapeHtml(profile.role)} &bull; ${profile.ratingsCount} ratings</span>
-        </div>
-        ${isActive ? '<span class="menu-profile-check">✓</span>' : ''}
-      `;
-
-      item.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setActiveUser(profile, true);
-        if (userAccountWrapper) userAccountWrapper.classList.remove('open');
-        if (accountDropdownMenu) accountDropdownMenu.classList.add('hidden');
+    try {
+      const res = await fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
+      if (res.ok) {
+        const user = await res.json();
+        state.currentUser = user;
+        state.userId = user.id;
+      } else {
+        // Obsolete or expired session token
+        localStorage.removeItem('cinema_auth_token');
+        state.currentUser = null;
+        state.userId = 1;
+      }
+    } catch (e) {
+      console.error('Session check failed:', e);
+      state.currentUser = null;
+      state.userId = 1;
+    }
+    updateAuthUI();
+  }
 
-      accountProfilesList.appendChild(item);
-    });
+  function updateAuthUI() {
+    const u = state.currentUser;
+    if (u) {
+      // Authenticated state
+      if (btnNavSignIn) btnNavSignIn.style.display = 'none';
+      if (userAccountWrapper) {
+        userAccountWrapper.classList.remove('hidden');
+        userAccountWrapper.style.display = 'flex';
+      }
+      const initial = (u.name || 'U').charAt(0).toUpperCase();
+      if (navUserAvatar) navUserAvatar.textContent = initial;
+      if (navUserName) navUserName.textContent = u.name;
+      if (menuUserAvatar) menuUserAvatar.textContent = initial;
+      if (menuUserName) menuUserName.textContent = u.name;
+      if (menuUserEmail) menuUserEmail.textContent = u.email;
+
+      if (recUserAvatar) recUserAvatar.textContent = initial;
+      if (recUserTitle) recUserTitle.textContent = `Curated for ${u.name}`;
+      if (recUserTasteSummary) {
+        recUserTasteSummary.textContent = `Personalized Cinema Intelligence for ${u.email}`;
+      }
+
+      if (profileLargeAvatar) profileLargeAvatar.textContent = initial;
+      if (profileName) profileName.textContent = u.name;
+      if (profileTagline) profileTagline.textContent = u.email;
+    } else {
+      // Unauthenticated state
+      if (btnNavSignIn) btnNavSignIn.style.display = 'inline-flex';
+      if (userAccountWrapper) {
+        userAccountWrapper.classList.add('hidden');
+        userAccountWrapper.style.display = 'none';
+        userAccountWrapper.classList.remove('open');
+      }
+      if (accountDropdownMenu) {
+        accountDropdownMenu.classList.add('hidden');
+      }
+      if (recUserAvatar) recUserAvatar.textContent = '—';
+      if (recUserTitle) recUserTitle.textContent = 'Curated Recommendations';
+      if (recUserTasteSummary) {
+        recUserTasteSummary.textContent = 'Explore personalized movies curated dynamically for your profile.';
+      }
+      if (profileLargeAvatar) profileLargeAvatar.textContent = '—';
+      if (profileName) profileName.textContent = 'User Profile';
+      if (profileTagline) profileTagline.textContent = 'Sign in to access your taste profile and history.';
+    }
+  }
+
+  function openAuthModal(mode = 'signin') {
+    if (!authModalOverlay) return;
+    authModalOverlay.classList.remove('hidden');
+    switchAuthTab(mode);
+    clearAuthErrors();
+    // Ensure all input fields start completely empty
+    if (loginEmail) loginEmail.value = '';
+    if (loginPassword) loginPassword.value = '';
+    if (signupName) signupName.value = '';
+    if (signupEmail) signupEmail.value = '';
+    if (signupPassword) signupPassword.value = '';
+  }
+
+  function closeAuthModal() {
+    if (!authModalOverlay) return;
+    authModalOverlay.classList.add('hidden');
+    clearAuthErrors();
+  }
+
+  function switchAuthTab(mode) {
+    clearAuthErrors();
+    if (mode === 'signup') {
+      if (tabAuthSignIn) tabAuthSignIn.classList.remove('active');
+      if (tabAuthSignUp) tabAuthSignUp.classList.add('active');
+      if (formSignIn) formSignIn.classList.add('hidden');
+      if (formSignUp) formSignUp.classList.remove('hidden');
+      if (signupName) signupName.focus();
+    } else {
+      if (tabAuthSignIn) tabAuthSignIn.classList.add('active');
+      if (tabAuthSignUp) tabAuthSignUp.classList.remove('active');
+      if (formSignIn) formSignIn.classList.remove('hidden');
+      if (formSignUp) formSignUp.classList.add('hidden');
+      if (loginEmail) loginEmail.focus();
+    }
+  }
+
+  function setAuthError(msg) {
+    if (!authErrorAlert) return;
+    authErrorAlert.textContent = msg;
+    authErrorAlert.classList.remove('hidden');
+  }
+
+  function clearAuthErrors() {
+    if (!authErrorAlert) return;
+    authErrorAlert.textContent = '';
+    authErrorAlert.classList.add('hidden');
+  }
+
+  async function handleLoginSubmit(e) {
+    e.preventDefault();
+    clearAuthErrors();
+
+    const email = loginEmail ? loginEmail.value.trim() : '';
+    const password = loginPassword ? loginPassword.value : '';
+
+    if (!email || !password) {
+      setAuthError('Please enter both email and password.');
+      return;
+    }
+
+    const submitBtn = document.getElementById('btnSubmitLogin');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Signing in...';
+    }
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAuthError(data.detail || 'Login failed. Please check your credentials.');
+        return;
+      }
+
+      // Legitimate login succeeded
+      localStorage.setItem('cinema_auth_token', data.token);
+      state.currentUser = data.user;
+      state.userId = data.user.id;
+      updateAuthUI();
+      closeAuthModal();
+      showToast(`Welcome back, ${data.user.name}!`);
+
+      // Refresh recommendations and profile with real user ID
+      loadRecommendations();
+      if (document.getElementById('viewProfile').classList.contains('active')) {
+        loadUserProfile();
+      }
+    } catch (err) {
+      setAuthError('Network error connecting to authentication server.');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
+      }
+    }
+  }
+
+  async function handleSignupSubmit(e) {
+    e.preventDefault();
+    clearAuthErrors();
+
+    const name = signupName ? signupName.value.trim() : '';
+    const email = signupEmail ? signupEmail.value.trim() : '';
+    const password = signupPassword ? signupPassword.value : '';
+
+    if (!name || !email || !password) {
+      setAuthError('Please complete all fields.');
+      return;
+    }
+    if (password.length < 6) {
+      setAuthError('Password must be at least 6 characters.');
+      return;
+    }
+
+    const submitBtn = document.getElementById('btnSubmitSignup');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating account...';
+    }
+
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAuthError(data.detail || 'Registration failed.');
+        return;
+      }
+
+      // Legitimate registration succeeded
+      localStorage.setItem('cinema_auth_token', data.token);
+      state.currentUser = data.user;
+      state.userId = data.user.id;
+      updateAuthUI();
+      closeAuthModal();
+      showToast(`Welcome to Cinema Intelligence, ${data.user.name}!`);
+
+      // Load clean recommendations for new user
+      loadRecommendations();
+      if (document.getElementById('viewProfile').classList.contains('active')) {
+        loadUserProfile();
+      }
+    } catch (err) {
+      setAuthError('Network error connecting to authentication server.');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
+      }
+    }
+  }
+
+  async function handleLogout() {
+    const token = localStorage.getItem('cinema_auth_token');
+    if (token) {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+      } catch (e) {
+        console.error('Logout error:', e);
+      }
+    }
+
+    // Clean all session data
+    localStorage.removeItem('cinema_auth_token');
+    localStorage.removeItem('cinema_active_user_id');
+    localStorage.removeItem('cinema_user_profiles');
+
+    state.currentUser = null;
+    state.userId = 1;
+    updateAuthUI();
+    showToast('Signed out successfully.');
+
+    // If currently on profile tab, redirect to home Discover tab
+    const profileTab = document.getElementById('viewProfile');
+    if (profileTab && profileTab.classList.contains('active')) {
+      switchTab('home');
+    }
+    loadRecommendations();
   }
 
   // ==========================================
@@ -573,6 +703,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (cleanId === 'profile') {
+      if (!state.currentUser) {
+        openAuthModal('signin');
+        showToast('Please sign in to access your taste profile and history.');
+      }
       loadUserProfile();
     } else if (cleanId === 'evaluation') {
       renderEvaluationTable();
@@ -683,21 +817,53 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Sign In Button (Navbar)
+    if (btnNavSignIn) {
+      btnNavSignIn.addEventListener('click', () => openAuthModal('signin'));
+    }
+
     // Dropdown Actions
     if (btnMenuProfile) {
       btnMenuProfile.addEventListener('click', () => {
-        userAccountWrapper.classList.remove('open');
-        accountDropdownMenu.classList.add('hidden');
+        if (userAccountWrapper) userAccountWrapper.classList.remove('open');
+        if (accountDropdownMenu) accountDropdownMenu.classList.add('hidden');
         switchTab('profile');
       });
     }
 
-    if (btnProfileSwitchUser) {
-      btnProfileSwitchUser.addEventListener('click', () => {
-        const currentIndex = state.savedProfiles.findIndex((p) => p.userId === state.userId);
-        const nextProfile = state.savedProfiles[(currentIndex + 1) % state.savedProfiles.length];
-        setActiveUser(nextProfile, false);
-        loadUserProfile();
+    if (btnMenuSignOut) {
+      btnMenuSignOut.addEventListener('click', () => {
+        if (userAccountWrapper) userAccountWrapper.classList.remove('open');
+        if (accountDropdownMenu) accountDropdownMenu.classList.add('hidden');
+        handleLogout();
+      });
+    }
+
+    if (btnProfileSignOut) {
+      btnProfileSignOut.addEventListener('click', handleLogout);
+    }
+
+    // Auth Modal Interactions
+    if (btnCloseAuthModal) {
+      btnCloseAuthModal.addEventListener('click', closeAuthModal);
+    }
+    if (tabAuthSignIn) {
+      tabAuthSignIn.addEventListener('click', () => switchAuthTab('signin'));
+    }
+    if (tabAuthSignUp) {
+      tabAuthSignUp.addEventListener('click', () => switchAuthTab('signup'));
+    }
+    if (formSignIn) {
+      formSignIn.addEventListener('submit', handleLoginSubmit);
+    }
+    if (formSignUp) {
+      formSignUp.addEventListener('submit', handleSignupSubmit);
+    }
+    if (authModalOverlay) {
+      authModalOverlay.addEventListener('click', (e) => {
+        if (e.target === authModalOverlay) {
+          closeAuthModal();
+        }
       });
     }
 
@@ -1344,34 +1510,52 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   let cachedUserProfile = null;
   async function loadUserProfile() {
+    const u = state.currentUser;
+    if (!u) {
+      if (profileLargeAvatar) profileLargeAvatar.textContent = '—';
+      if (profileName) profileName.textContent = 'User Profile';
+      if (profileTagline) profileTagline.textContent = 'Sign in to access your taste profile and history.';
+      if (profileRatedCount) profileRatedCount.textContent = '0';
+      if (profileMeanRating) profileMeanRating.textContent = '0.0 ★';
+      if (profilePrimaryTaste) profilePrimaryTaste.textContent = '—';
+      if (profileGenreBars) {
+        profileGenreBars.innerHTML =
+          '<p style="font-size:0.85rem;color:var(--text-dim);padding:8px 0;">Sign in to view your genre affinities.</p>';
+      }
+      if (historyContent) {
+        historyContent.innerHTML =
+          '<p style="color:var(--text-dim);font-size:0.9rem;padding:24px;text-align:center;">Sign in to view your rating history and feedback.</p>';
+      }
+      return;
+    }
+
     try {
       const res = await fetch(`/api/users/${state.userId}/profile`);
       if (!res.ok) return;
       cachedUserProfile = await res.json();
 
-      const u = state.currentUser;
+      const initial = (u.name || 'U').charAt(0).toUpperCase();
       if (profileLargeAvatar) {
-        profileLargeAvatar.textContent = u ? u.avatar : 'U';
-        profileLargeAvatar.style.background = u ? u.color : 'var(--accent-gradient)';
+        profileLargeAvatar.textContent = initial;
       }
       if (profileName) {
-        profileName.textContent = u ? u.name : `User ${state.userId}`;
+        profileName.textContent = u.name;
       }
       if (profileTagline) {
-        profileTagline.textContent = u ? u.role : 'Taste Signature';
+        profileTagline.textContent = u.email;
       }
       if (profileRatedCount) {
-        profileRatedCount.textContent = cachedUserProfile.ratings_count.toLocaleString();
+        profileRatedCount.textContent = (cachedUserProfile.ratings_count || 0).toLocaleString();
       }
       if (profileMeanRating) {
-        profileMeanRating.textContent = `${cachedUserProfile.average_rating} ★`;
+        profileMeanRating.textContent = `${cachedUserProfile.average_rating || 0.0} ★`;
       }
 
       if (profilePrimaryTaste) {
         if (cachedUserProfile.top_genres && cachedUserProfile.top_genres.length > 0) {
           profilePrimaryTaste.textContent = cachedUserProfile.top_genres[0].genre;
         } else {
-          profilePrimaryTaste.textContent = u ? u.primaryGenre : 'General';
+          profilePrimaryTaste.textContent = 'New Viewer (Uncalibrated)';
         }
       }
 
@@ -1396,7 +1580,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         } else {
           profileGenreBars.innerHTML =
-            '<p style="font-size:0.85rem;color:var(--text-dim);padding:8px 0;">No historical ratings recorded to compute genre affinities.</p>';
+            '<p style="font-size:0.85rem;color:var(--text-dim);padding:8px 0;">No ratings recorded yet. Rate movies in the catalog to calibrate your genre affinities!</p>';
         }
       }
 

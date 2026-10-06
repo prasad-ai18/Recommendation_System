@@ -92,3 +92,32 @@ class ExplainabilityResponse(BaseModel):
     score_breakdown: Dict[str, float]
     primary_signal: str
     similar_rated_seeds: List[Dict[str, Any]]
+
+
+class UserRegisterRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=60, description="User full name or display handle")
+    email: str = Field(..., min_length=5, max_length=120, description="Valid email address")
+    password: str = Field(..., min_length=6, max_length=100, description="Account password (min 6 chars)")
+    primary_genre: Optional[str] = Field("All", description="Preferred starter movie genre")
+
+
+class UserLoginRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=120, description="Registered email address")
+    password: str = Field(..., min_length=1, description="Account password")
+
+
+class AuthUserResponse(BaseModel):
+    id: int
+    email: str
+    name: str
+    primary_genre: str
+    role: str
+    created_at: str
+    ratings_count: int = 0
+
+
+class AuthSessionResponse(BaseModel):
+    status: str = "success"
+    token: str
+    user: AuthUserResponse
+

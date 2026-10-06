@@ -5,10 +5,11 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 import numpy as np
 import pandas as pd
-from fastapi import APIRouter, HTTPException, Query, Path as FastPath, Depends
+from fastapi import APIRouter, HTTPException, Query, Path as FastPath, Depends, Header
 
 from src.config import settings
 from src.logger import logger
+from src.data import db
 from src.api.schemas import (
     RecommendationResponse,
     RecommendationItemResponse,
@@ -19,6 +20,10 @@ from src.api.schemas import (
     HealthResponse,
     UserProfileResponse,
     ExplainabilityResponse,
+    UserRegisterRequest,
+    UserLoginRequest,
+    AuthUserResponse,
+    AuthSessionResponse,
 )
 
 router = APIRouter()
@@ -34,6 +39,80 @@ def set_app_state(state: Dict[str, Any]):
 
 def get_app_state() -> Dict[str, Any]:
     return _app_state
+
+
+# ==========================================
+# Production Authentication Endpoints
+# ==========================================
+
+@router.post("/auth/signup", response_model=AuthSessionResponse, summary="Register New Legitimate User")
+def register_user(req: UserRegisterRequest):
+    """
+    Registers a new legitimate user with validation and PBKDF2 password hashing.
+    Starts with a clean profile. No demo accounts or mock data copied.
+    """
+    try:
+        user = db.create_user(
+            email=req.email,
+            password=req.password,
+            name=req.name,
+            primary_genre=req.primary_genre or "All",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    token = db.create_session(user["id"])
+    return AuthSessionResponse(
+        status="success",
+        token=token,
+        user=AuthUserResponse(**user),
+    )
+
+
+@router.post("/auth/login", response_model=AuthSessionResponse, summary="Authenticate User")
+def login_user(req: UserLoginRequest):
+    """
+    Authenticates user against hashed credentials. Returns session token.
+    Rejects invalid credentials. Zero hardcoded accounts.
+    """
+    user = db.authenticate_user(email=req.email, password=req.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password.")
+
+    token = db.create_session(user["id"])
+    return AuthSessionResponse(
+        status="success",
+        token=token,
+        user=AuthUserResponse(**user),
+    )
+
+
+@router.get("/auth/me", response_model=AuthUserResponse, summary="Get Current Authenticated User")
+def get_current_user(authorization: Optional[str] = Header(None)):
+    """
+    Returns the currently authenticated user from Bearer session token.
+    Returns 401 if unauthenticated.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required. Please sign in.")
+
+    token = authorization.split("Bearer ", 1)[1].strip()
+    user = db.get_user_by_session(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Session expired or invalid. Please sign in again.")
+
+    return AuthUserResponse(**user)
+
+
+@router.post("/auth/logout", summary="Logout and Invalidate Session")
+def logout_user(authorization: Optional[str] = Header(None)):
+    """
+    Destroys active session token on logout.
+    """
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split("Bearer ", 1)[1].strip()
+        db.delete_session(token)
+    return {"status": "success", "message": "Logged out successfully."}
 
 
 @router.get("/recommend/{user_id}", response_model=RecommendationResponse, summary="Get Top-K Recommendations")
@@ -204,6 +283,13 @@ def record_feedback(
 
     now_iso = datetime.now(timezone.utc).isoformat()
 
+    # Persist in SQLite database
+    try:
+        from src.data.db import record_feedback as db_record_feedback
+        db_record_feedback(payload.user_id, payload.movie_id, payload.interaction_type, payload.rating)
+    except Exception as e:
+        logger.warning(f"Could not persist feedback event to database: {e}")
+
     # Log interaction
     feedback_log = state.setdefault("feedback_log", [])
     feedback_log.append({
@@ -288,8 +374,17 @@ def get_user_profile(
     movie_meta = getattr(registry.get_model("popularity"), "movie_meta", {}) if registry else {}
     hybrid_model = registry.get_model("hybrid") if registry else None
 
-    user_ratings = getattr(hybrid_model, "user_ratings", {}).get(user_id, {})
-    affinities = getattr(hybrid_model, "user_genre_affinities", {}).get(user_id, {})
+    user_ratings = dict(getattr(hybrid_model, "user_ratings", {}).get(user_id, {}))
+    affinities = dict(getattr(hybrid_model, "user_genre_affinities", {}).get(user_id, {}))
+
+    # Merge persisted database ratings
+    try:
+        from src.data.db import get_user_ratings as db_get_user_ratings
+        db_ratings = db_get_user_ratings(user_id)
+        if db_ratings:
+            user_ratings.update(db_ratings)
+    except Exception as e:
+        logger.warning(f"Could not load database ratings for user {user_id}: {e}")
 
     ratings_count = len(user_ratings)
     avg_rating = round(float(sum(user_ratings.values()) / ratings_count), 2) if ratings_count > 0 else 0.0

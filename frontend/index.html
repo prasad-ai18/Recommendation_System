@@ -55,35 +55,41 @@
         <button class="nav-tab" data-tab="architecture" id="tabArchitecture">Architecture</button>
       </nav>
 
-      <!-- Right Controls: Account Profile -->
+      <!-- Right Controls: Clean Production Account Authentication -->
       <div class="nav-user-control">
-        <!-- User Account Pill & Dropdown -->
-        <div class="user-account-wrapper" id="userAccountWrapper">
+        <!-- Sign In Button (shown when unauthenticated) -->
+        <button class="action-btn btn-primary nav-signin-btn" id="btnNavSignIn" style="padding: 7px 16px; font-size: 0.84rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+          Sign In
+        </button>
+
+        <!-- User Account Pill & Dropdown (shown when authenticated) -->
+        <div class="user-account-wrapper hidden" id="userAccountWrapper">
           <button class="user-chip-btn" id="userChipBtn" aria-label="Account Profile Menu">
-            <span class="user-chip-avatar" id="navUserAvatar">A</span>
-            <span class="user-chip-name" id="navUserName">Alex Vance</span>
+            <span class="user-chip-avatar" id="navUserAvatar">—</span>
+            <span class="user-chip-name" id="navUserName">Account</span>
             <svg class="chevron-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </button>
           
           <!-- Account Dropdown Popover -->
           <div class="account-dropdown-menu hidden" id="accountDropdownMenu">
             <div class="account-menu-header">
-              <div class="menu-avatar" id="menuUserAvatar">A</div>
+              <div class="menu-avatar" id="menuUserAvatar">—</div>
               <div class="menu-user-details">
-                <strong id="menuUserName">Alex Vance</strong>
-                <small id="menuUserTaste">Sci-Fi & Action Aficionado</small>
+                <strong id="menuUserName">User</strong>
+                <small id="menuUserEmail">user@example.com</small>
               </div>
             </div>
             <div class="account-menu-divider"></div>
             <button class="account-menu-item" id="btnMenuProfile">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              <span>View Taste Signature</span>
+              <span>View Taste Profile</span>
             </button>
             <div class="account-menu-divider"></div>
-            <div class="account-menu-section-title">Select User Profile</div>
-            <div class="account-profiles-list" id="accountProfilesList">
-              <!-- Populated dynamically with one-click user switches -->
-            </div>
+            <button class="account-menu-item" id="btnMenuSignOut" style="color: #ff4d4f;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              <span>Sign Out</span>
+            </button>
           </div>
         </div>
       </div>
@@ -212,10 +218,10 @@
         <div class="recommendations-header-card glass-panel">
           <div class="header-main-info">
             <div class="user-profile-summary">
-              <div class="user-avatar" id="recUserAvatar">A</div>
+              <div class="user-avatar" id="recUserAvatar">—</div>
               <div>
-                <h2 class="user-title" id="recUserTitle">Curated for Alex Vance</h2>
-                <p class="user-taste-summary" id="recUserTasteSummary">Taste Signature: Sci-Fi & Action Aficionado (232 ratings)</p>
+                <h2 class="user-title" id="recUserTitle">Curated Recommendations</h2>
+                <p class="user-taste-summary" id="recUserTasteSummary">Explore personalized movies curated dynamically for your profile.</p>
               </div>
             </div>
 
@@ -345,22 +351,22 @@
         <div class="profile-layout">
           <!-- Left Column: User Summary Card -->
           <div class="profile-card glass-panel">
-            <div class="profile-avatar-large" id="profileLargeAvatar">A</div>
-            <h2 class="profile-name" id="profileName">Alex Vance</h2>
+            <div class="profile-avatar-large" id="profileLargeAvatar">—</div>
+            <h2 class="profile-name" id="profileName">User Profile</h2>
             <p class="profile-tagline" id="profileTagline">Profile History & Taste Signature</p>
 
             <div class="profile-metrics-list">
               <div class="metric-row">
                 <span class="m-label">Total Rated Movies:</span>
-                <span class="m-value" id="profileRatedCount">232</span>
+                <span class="m-value" id="profileRatedCount">0</span>
               </div>
               <div class="metric-row">
                 <span class="m-label">Mean Rating Given:</span>
-                <span class="m-value" id="profileMeanRating">4.3 ★</span>
+                <span class="m-value" id="profileMeanRating">0.0 ★</span>
               </div>
               <div class="metric-row">
                 <span class="m-label">Primary Taste:</span>
-                <span class="m-value" id="profilePrimaryTaste">Sci-Fi</span>
+                <span class="m-value" id="profilePrimaryTaste">—</span>
               </div>
             </div>
 
@@ -371,8 +377,8 @@
               </div>
             </div>
 
-            <button class="action-btn btn-secondary" id="btnProfileSwitchUser" style="width:100%;margin-top:16px;">
-              Switch Active Profile
+            <button class="action-btn btn-secondary" id="btnProfileSignOut" style="width:100%;margin-top:16px;">
+              Sign Out
             </button>
           </div>
 
@@ -718,6 +724,110 @@
         <div class="modal-body" id="modalBody">
           <!-- Populated dynamically -->
         </div>
+      </div>
+    </div>
+
+    <!-- AUTHENTICATION MODAL (PRODUCTION SIGN IN & SIGN UP) -->
+    <div class="modal-overlay hidden" id="authModalOverlay">
+      <div class="modal-content glass-panel auth-modal-box" id="authModalBox">
+        <button class="modal-close-btn" id="btnCloseAuthModal" aria-label="Close Authentication Modal">&times;</button>
+        
+        <div class="auth-header">
+          <div class="auth-icon-badge">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </div>
+          <h3 class="auth-title" id="authModalTitle">Cinema Account</h3>
+          <p class="auth-subtitle">Sign in or create an account to access personalized intelligence.</p>
+        </div>
+
+        <!-- Auth Mode Switcher Tabs -->
+        <div class="auth-tabs-group">
+          <button class="auth-tab-btn active" id="tabAuthSignIn" type="button">Sign In</button>
+          <button class="auth-tab-btn" id="tabAuthSignUp" type="button">Create Account</button>
+        </div>
+
+        <!-- Auth Alert Message -->
+        <div class="auth-alert hidden" id="authErrorAlert"></div>
+
+        <!-- Tab 1: Sign In Form -->
+        <form class="auth-form" id="formSignIn" autocomplete="on">
+          <div class="auth-field">
+            <label for="loginEmail" class="auth-label">Email Address</label>
+            <input 
+              type="email" 
+              id="loginEmail" 
+              name="email" 
+              class="auth-input" 
+              placeholder="you@example.com" 
+              required 
+              autocomplete="email"
+              value=""
+            />
+          </div>
+          <div class="auth-field">
+            <label for="loginPassword" class="auth-label">Password</label>
+            <input 
+              type="password" 
+              id="loginPassword" 
+              name="password" 
+              class="auth-input" 
+              placeholder="••••••••" 
+              required 
+              autocomplete="current-password"
+              value=""
+            />
+          </div>
+          <button type="submit" class="action-btn btn-primary auth-submit-btn" id="btnSubmitLogin">
+            Sign In
+          </button>
+        </form>
+
+        <!-- Tab 2: Sign Up Form -->
+        <form class="auth-form hidden" id="formSignUp" autocomplete="on">
+          <div class="auth-field">
+            <label for="signupName" class="auth-label">Full Name</label>
+            <input 
+              type="text" 
+              id="signupName" 
+              name="name" 
+              class="auth-input" 
+              placeholder="Your Name" 
+              required 
+              autocomplete="name"
+              value=""
+            />
+          </div>
+          <div class="auth-field">
+            <label for="signupEmail" class="auth-label">Email Address</label>
+            <input 
+              type="email" 
+              id="signupEmail" 
+              name="email" 
+              class="auth-input" 
+              placeholder="you@example.com" 
+              required 
+              autocomplete="email"
+              value=""
+            />
+          </div>
+          <div class="auth-field">
+            <label for="signupPassword" class="auth-label">Password</label>
+            <input 
+              type="password" 
+              id="signupPassword" 
+              name="password" 
+              class="auth-input" 
+              placeholder="Minimum 6 characters" 
+              minlength="6" 
+              required 
+              autocomplete="new-password"
+              value=""
+            />
+          </div>
+          <button type="submit" class="action-btn btn-primary auth-submit-btn" id="btnSubmitSignup">
+            Create Account
+          </button>
+        </form>
       </div>
     </div>
 

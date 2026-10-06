@@ -70,10 +70,10 @@ def create_sample_users(train_df: pd.DataFrame, movies_df: pd.DataFrame, count: 
                 "top_genres": [g[0] for g in top_genre_list],
             })
 
-    # Add a cold-start demonstration user
+    # Add a cold-start user
     sample_list.append({
         "user_id": 9999,
-        "label": "User 9999 (New User - Cold Start Demo)",
+        "label": "User 9999 (New User - Cold Start)",
         "ratings_count": 0,
         "primary_genre": "General",
         "top_genres": [],
@@ -82,11 +82,16 @@ def create_sample_users(train_df: pd.DataFrame, movies_df: pd.DataFrame, count: 
     return sample_list
 
 
+from src.data.db import init_db
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initializes models and datasets on server startup."""
+    """Initializes models, database, and datasets on server startup."""
     logger.info("Initializing Recommendation Intelligence Platform...")
     start_time = time.time()
+
+    # 0. Initialize SQLite production database
+    init_db()
 
     # 1. Ensure data is loaded and preprocessed
     loader = DataLoader()
