@@ -1,0 +1,31 @@
+{
+  "total_users": 610,
+  "total_movies": 9742,
+  "total_ratings": 100836,
+  "train_ratings": 80419,
+  "val_ratings": 10059,
+  "test_ratings": 10358,
+  "global_rating_mean": 3.502,
+  "genres_count": 19,
+  "genres": [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Crime",
+    "Documentary",
+    "Drama",
+    "Fantasy",
+    "Film-Noir",
+    "Horror",
+    "IMAX",
+    "Musical",
+    "Mystery",
+    "Romance",
+    "Sci-Fi",
+    "Thriller",
+    "War",
+    "Western"
+  ]
+}

@@ -95,15 +95,15 @@ async def lifespan(app: FastAPI):
 
     # 1. Ensure data is loaded and preprocessed
     loader = DataLoader()
-    raw_path = loader.extracted_path
-    if not (raw_path / "ratings.csv").exists():
-        logger.info("Raw dataset not found, downloading...")
+    preprocessor = DataPreprocessor()
+    try:
+        data = preprocessor.load_processed()
+    except Exception as e:
+        logger.info(f"Processed dataset not ready ({e}), acquiring raw data and preprocessing...")
         ratings_df, movies_df = loader.load_raw_data()
         preprocessor = DataPreprocessor()
         preprocessor.process_and_save(ratings_df, movies_df)
-
-    preprocessor = DataPreprocessor()
-    data = preprocessor.load_processed()
+        data = preprocessor.load_processed()
 
     # 2. Initialize and fit recommendation models
     registry = ModelRegistry()
@@ -119,7 +119,7 @@ async def lifespan(app: FastAPI):
             registry=registry,
             test_df=data["test_df"],
             total_catalog_items=len(data["movies_df"]),
-            max_eval_users=150,
+            max_eval_users=80,
         )
 
     # 4. Generate sample user profiles for UI testing
